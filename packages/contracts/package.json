@@ -1,0 +1,25 @@
+{
+	"name": "@local-ai/contracts",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./common": "./src/common/index.ts",
+		"./chat": "./src/chat/index.ts",
+		"./conversation": "./src/conversation/index.ts",
+		"./document": "./src/document/index.ts",
+		"./file": "./src/file/index.ts",
+		"./workspace": "./src/workspace/index.ts"
+	},
+	"scripts": {
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"zod": "^4.4.3"
+	},
+	"devDependencies": {
+		"@local-ai/config": "workspace:*",
+		"typescript": "^5.0.0"
+	}
+}

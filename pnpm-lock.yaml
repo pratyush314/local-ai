@@ -12,6 +12,39 @@ importers:
         specifier: ^2.10.11
         version: 2.10.11
 
+  packages/config: {}
+
+  packages/constants:
+    devDependencies:
+      '@local-ai/config':
+        specifier: workspace:*
+        version: link:../config
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
+  packages/contracts:
+    dependencies:
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@local-ai/config':
+        specifier: workspace:*
+        version: link:../config
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
+  packages/utils:
+    devDependencies:
+      '@local-ai/config':
+        specifier: workspace:*
+        version: link:../config
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
 packages:
 
   '@turbo/darwin-64@2.10.11':
@@ -48,6 +81,14 @@ packages:
     resolution: {integrity: sha512-yQfwQVoRXwOuyX1LxiJFBFNg6VfuYh+/RyZLd82+isgyLkBXw3S5XRRzvcck1FAjSCG5sVyLd+O1eDMvYa3J7g==}
     hasBin: true
 
+  typescript@5.9.3:
+    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
+  zod@4.4.3:
+    resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
+
 snapshots:
 
   '@turbo/darwin-64@2.10.11':
@@ -76,3 +117,7 @@ snapshots:
       '@turbo/linux-arm64': 2.10.11
       '@turbo/windows-64': 2.10.11
       '@turbo/windows-arm64': 2.10.11
+
+  typescript@5.9.3: {}
+
+  zod@4.4.3: {}
