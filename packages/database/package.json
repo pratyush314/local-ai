@@ -1,0 +1,27 @@
+{
+	"name": "@local-ai/database",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./client": "./src/client.ts",
+		"./schema": "./src/schema/index.ts"
+	},
+	"scripts": {
+		"typecheck": "tsc --noEmit",
+		"db:generate": "drizzle-kit generate",
+		"db:migrate": "drizzle-kit migrate",
+		"db:push": "drizzle-kit push"
+	},
+	"dependencies": {
+		"better-sqlite3": "^12.11.1",
+		"drizzle-orm": "^0.44.7"
+	},
+	"devDependencies": {
+		"@local-ai/config": "workspace:*",
+		"@types/better-sqlite3": "^7.6.0",
+		"drizzle-kit": "^0.31.0",
+		"typescript": "^5.0.0"
+	}
+}
