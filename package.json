@@ -11,6 +11,6 @@
 		"clean": "turbo run clean"
 	},
 	"devDependencies": {
-		"turbo": "^2.x.x"
+		"turbo": "^2.10.11"
 	}
 }

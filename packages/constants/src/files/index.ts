@@ -1,0 +1,31 @@
+export const FILE_TYPES = {
+	TEXT: 'text',
+	DOCUMENT: 'document',
+	CODE: 'code',
+	DATA: 'data',
+} as const;
+
+export const SUPPORTED_FILE_EXTENSIONS = [
+	'.txt',
+	'.md',
+	'.pdf',
+	'.docx',
+	'.json',
+	'.csv',
+	'.ts',
+	'.tsx',
+	'.js',
+	'.jsx',
+	'.py',
+	'.java',
+	'.go',
+	'.rs',
+	'.cpp',
+	'.c',
+	'.h',
+	'.hpp',
+	'.sql',
+	'.html',
+	'.css',
+	'.scss',
+] as const;

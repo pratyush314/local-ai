@@ -1,0 +1,19 @@
+{
+	"name": "@local-ai/utils",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./object": "./src/object/index.ts",
+		"./string": "./src/string/index.ts",
+		"./validation": "./src/validation/index.ts"
+	},
+	"scripts": {
+		"typecheck": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"@local-ai/config": "workspace:*",
+		"typescript": "^5.0.0"
+	}
+}

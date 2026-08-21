@@ -1,0 +1,20 @@
+{
+	"name": "@local-ai/constants",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./ai": "./src/ai/index.ts",
+		"./chat": "./src/chat/index.ts",
+		"./files": "./src/files/index.ts",
+		"./workspace": "./src/workspace/index.ts"
+	},
+	"scripts": {
+		"typecheck": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"@local-ai/config": "workspace:*",
+		"typescript": "^5.0.0"
+	}
+}
