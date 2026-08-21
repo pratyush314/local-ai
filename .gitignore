@@ -1,0 +1,29 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+.next
+out
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Turbo
+.turbo
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local database
+*.db
+*.db-journal
+
+# Generated files
+coverage

@@ -1,0 +1,16 @@
+{
+	"name": "local-ai",
+	"version": "1.0.0",
+	"private": true,
+	"packageManager": "pnpm@10.33.0",
+	"scripts": {
+		"build": "turbo run build",
+		"dev": "turbo run dev",
+		"lint": "turbo run lint",
+		"typecheck": "turbo run typecheck",
+		"clean": "turbo run clean"
+	},
+	"devDependencies": {
+		"turbo": "^2.x.x"
+	}
+}
