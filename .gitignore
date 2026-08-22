@@ -27,3 +27,9 @@ Thumbs.db
 
 # Generated files
 coverage
+
+# Database Directory
+data/
+*.db
+*.db-shm
+*.db-wal
