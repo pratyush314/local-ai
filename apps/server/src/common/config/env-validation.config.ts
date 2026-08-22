@@ -14,6 +14,11 @@ export const envValidationSchema = z.object({
 
   CLIENT_URL: z.string().url('CLIENT_URL must be a valid URL'),
 
+  DATABASE_URL: z
+    .string()
+    .min(1, 'DATABASE_URL is required')
+    .default('./data/local-ai.db'),
+
   DATABASE_PATH: z.string().min(1, 'DATABASE_PATH is required'),
 
   LLAMA_MODEL_PATH: z.string().min(1, 'LLAMA_MODEL_PATH is required'),
