@@ -25,6 +25,8 @@ export const envValidationSchema = z.object({
 
   LLAMA_CPP_PATH: z.string().min(1, 'LLAMA_CPP_PATH is required'),
 
+  LLAMA_CPP_BASE_URL: z.string().url(),
+
   LLAMA_SERVER_PORT: z.coerce.number().int().min(1).max(65535).default(8080),
 
   STORAGE_PATH: z.string().min(1, 'STORAGE_PATH is required'),
