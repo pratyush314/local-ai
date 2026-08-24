@@ -1,9 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import type {
-  LlmMessage,
-  LlmProvider,
-} from './interfaces/llm-provider.interface';
+import type { LlmProvider } from './interfaces/llm-provider.interface';
+import type { LlmGenerationOptions } from './types/llm-generation.type';
+import type { LlmStreamEvent } from './types/llm-stream.type';
 
 export const LLM_PROVIDER = Symbol('LLM_PROVIDER');
 
@@ -14,7 +13,11 @@ export class LlmService {
     private readonly provider: LlmProvider,
   ) {}
 
-  chat(messages: LlmMessage[]): Promise<string> {
-    return this.provider.chat(messages);
+  generate(options: LlmGenerationOptions): Promise<string> {
+    return this.provider.generate(options);
+  }
+
+  stream(options: LlmGenerationOptions): AsyncIterable<LlmStreamEvent> {
+    return this.provider.stream(options);
   }
 }

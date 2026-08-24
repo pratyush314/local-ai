@@ -1,10 +1,8 @@
-export type LlmMessageRole = 'system' | 'user' | 'assistant';
-
-export interface LlmMessage {
-  role: LlmMessageRole;
-  content: string;
-}
+import { LlmGenerationOptions } from '../types/llm-generation.type';
+import { LlmStreamEvent } from '../types/llm-stream.type';
 
 export interface LlmProvider {
-  chat(messages: LlmMessage[]): Promise<string>;
+  generate(options: LlmGenerationOptions): Promise<string>;
+
+  stream(options: LlmGenerationOptions): AsyncIterable<LlmStreamEvent>;
 }
