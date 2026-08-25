@@ -1,4 +1,6 @@
-export type LlmMessageRole = 'system' | 'user' | 'assistant';
+import type { ChatRole } from '@local-ai/constants/chat';
+
+export type LlmMessageRole = ChatRole;
 
 export interface LlmMessage {
   role: LlmMessageRole;

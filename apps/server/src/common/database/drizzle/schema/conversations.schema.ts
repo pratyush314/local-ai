@@ -5,7 +5,9 @@ import { timestamps } from './base-columns';
 export const conversations = sqliteTable(
   'conversations',
   {
-    id: text('id').primaryKey(),
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
 
     title: text('title').notNull(),
 
