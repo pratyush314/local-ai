@@ -4,9 +4,7 @@ import { desc, eq } from 'drizzle-orm';
 import { DatabaseService } from '@/common/database/database.service';
 import {
   conversations,
-  messages,
   type NewConversation,
-  type NewMessage,
 } from '@/common/database/drizzle/schema';
 
 @Injectable()
@@ -38,21 +36,5 @@ export class ConversationsRepository {
     await this.database.db
       .delete(conversations)
       .where(eq(conversations.id, id));
-  }
-
-  async createMessage(data: NewMessage) {
-    const [message] = await this.database.db
-      .insert(messages)
-      .values(data)
-      .returning();
-
-    return message;
-  }
-
-  async findMessagesByConversationId(conversationId: string) {
-    return this.database.db.query.messages.findMany({
-      where: eq(messages.conversationId, conversationId),
-      orderBy: (messages, { asc }) => [asc(messages.createdAt)],
-    });
   }
 }

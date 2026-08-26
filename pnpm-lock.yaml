@@ -159,6 +159,9 @@ importers:
       '@local-ai/config':
         specifier: workspace:*
         version: link:../config
+      '@local-ai/constants':
+        specifier: workspace:*
+        version: link:../constants
       typescript:
         specifier: ^5.0.0
         version: 5.9.3

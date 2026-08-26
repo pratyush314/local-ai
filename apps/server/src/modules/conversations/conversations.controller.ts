@@ -21,11 +21,6 @@ export class ConversationsController {
     return this.conversationsService.getConversation(id);
   }
 
-  @Get(':id/messages')
-  getMessages(@Param('id') id: string) {
-    return this.conversationsService.getMessages(id);
-  }
-
   @Delete(':id')
   async deleteConversation(@Param('id') id: string) {
     await this.conversationsService.deleteConversation(id);
