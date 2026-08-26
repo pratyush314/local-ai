@@ -30,14 +30,6 @@ export class ConversationsService {
     return this.conversationsRepository.findAllConversations();
   }
 
-  async getMessages(conversationId: string) {
-    await this.getConversation(conversationId);
-
-    return this.conversationsRepository.findMessagesByConversationId(
-      conversationId,
-    );
-  }
-
   async deleteConversation(id: string) {
     await this.getConversation(id);
 
