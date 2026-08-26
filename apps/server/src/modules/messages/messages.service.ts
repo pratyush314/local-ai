@@ -31,6 +31,22 @@ export class MessagesService {
     return this.messagesRepository.findByConversationId(conversationId);
   }
 
+  async update(
+    id: string,
+    data: {
+      content?: string;
+      status?: MessageStatus;
+    },
+  ): Promise<Message> {
+    const message = await this.messagesRepository.update(id, data);
+
+    if (!message) {
+      throw new NotFoundException(`Message with id "${id}" not found`);
+    }
+
+    return message;
+  }
+
   async updateContent(id: string, content: string): Promise<Message> {
     const message = await this.messagesRepository.update(id, {
       content,

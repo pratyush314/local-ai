@@ -5,9 +5,16 @@ import { AppConfigModule } from '@/common/config/app-config.module';
 import { DatabaseModule } from '@/common/database/database.module';
 import { ConversationsModule } from '@/modules/conversations/conversations.module';
 import { LlmModule } from '@/modules/llm/llm.module';
+import { ChatModule } from './modules/chat/chat.module';
 
 @Module({
-  imports: [AppConfigModule, DatabaseModule, ConversationsModule, LlmModule],
+  imports: [
+    AppConfigModule,
+    DatabaseModule,
+    ConversationsModule,
+    LlmModule,
+    ChatModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
