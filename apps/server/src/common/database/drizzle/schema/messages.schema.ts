@@ -1,12 +1,16 @@
 import { index, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
+import { CHAT_ROLES, MESSAGE_STATUS } from '@local-ai/constants/chat';
+
 import { timestamps } from './base-columns';
 import { conversations } from './conversations.schema';
 
 export const messages = sqliteTable(
   'messages',
   {
-    id: text('id').primaryKey(),
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
 
     conversationId: text('conversation_id')
       .notNull()
@@ -16,10 +20,22 @@ export const messages = sqliteTable(
       }),
 
     role: text('role', {
-      enum: ['system', 'user', 'assistant'],
+      enum: [CHAT_ROLES.SYSTEM, CHAT_ROLES.USER, CHAT_ROLES.ASSISTANT],
     }).notNull(),
 
     content: text('content').notNull(),
+
+    status: text('status', {
+      enum: [
+        MESSAGE_STATUS.PENDING,
+        MESSAGE_STATUS.STREAMING,
+        MESSAGE_STATUS.COMPLETED,
+        MESSAGE_STATUS.FAILED,
+        MESSAGE_STATUS.CANCELLED,
+      ],
+    })
+      .notNull()
+      .default(MESSAGE_STATUS.COMPLETED),
 
     ...timestamps,
   },
@@ -30,6 +46,8 @@ export const messages = sqliteTable(
       table.conversationId,
       table.createdAt,
     ),
+
+    index('messages_status_idx').on(table.status),
   ],
 );
 
