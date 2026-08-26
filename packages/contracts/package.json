@@ -20,6 +20,7 @@
 	},
 	"devDependencies": {
 		"@local-ai/config": "workspace:*",
+		"@local-ai/constants": "workspace:*",
 		"typescript": "^5.0.0"
 	}
 }
