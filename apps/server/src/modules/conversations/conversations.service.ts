@@ -30,6 +30,28 @@ export class ConversationsService {
     return this.conversationsRepository.findAllConversations();
   }
 
+  async touchConversation(id: string) {
+    const conversation =
+      await this.conversationsRepository.touchConversation(id);
+
+    if (!conversation) {
+      throw new NotFoundException('Conversation not found');
+    }
+
+    return conversation;
+  }
+
+  async updateConversationTitle(id: string, title: string) {
+    const conversation =
+      await this.conversationsRepository.updateConversationTitle(id, title);
+
+    if (!conversation) {
+      throw new NotFoundException('Conversation not found');
+    }
+
+    return conversation;
+  }
+
   async deleteConversation(id: string) {
     await this.getConversation(id);
 

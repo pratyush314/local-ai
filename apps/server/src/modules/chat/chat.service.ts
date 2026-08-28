@@ -58,6 +58,8 @@ export class ChatService {
       status: MESSAGE_STATUS.COMPLETED,
     });
 
+    await this.conversationsService.touchConversation(conversationId);
+
     const assistantMessage = await this.messagesService.create({
       id: crypto.randomUUID(),
       conversationId,

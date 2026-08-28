@@ -3,6 +3,7 @@ import { desc, eq } from 'drizzle-orm';
 
 import { DatabaseService } from '@/common/database/database.service';
 import {
+  Conversation,
   conversations,
   type NewConversation,
 } from '@/common/database/drizzle/schema';
@@ -30,6 +31,34 @@ export class ConversationsRepository {
     return this.database.db.query.conversations.findMany({
       orderBy: [desc(conversations.updatedAt)],
     });
+  }
+
+  async updateConversationTitle(
+    id: string,
+    title: string,
+  ): Promise<Conversation | undefined> {
+    const [conversation] = await this.database.db
+      .update(conversations)
+      .set({
+        title,
+        updatedAt: new Date(),
+      })
+      .where(eq(conversations.id, id))
+      .returning();
+
+    return conversation;
+  }
+
+  async touchConversation(id: string): Promise<Conversation | undefined> {
+    const [conversation] = await this.database.db
+      .update(conversations)
+      .set({
+        updatedAt: new Date(),
+      })
+      .where(eq(conversations.id, id))
+      .returning();
+
+    return conversation;
   }
 
   async deleteConversation(id: string) {
