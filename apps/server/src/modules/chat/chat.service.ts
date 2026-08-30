@@ -54,10 +54,7 @@ export class ChatService {
   private async *sendMessage(
     conversationId: string,
     content: string,
-    options?: {
-      signal?: AbortSignal;
-      shouldGenerateTitle?: boolean;
-    },
+    options?: { signal?: AbortSignal; shouldGenerateTitle?: boolean },
   ): AsyncIterable<ChatStreamEvent> {
     const { signal, shouldGenerateTitle = false } = options ?? {};
 
@@ -71,6 +68,12 @@ export class ChatService {
 
     await this.conversationsService.touchConversation(conversationId);
 
+    yield {
+      type: 'message',
+      messageId: userMessage.id,
+      role: CHAT_ROLES.USER,
+    };
+
     const assistantMessage = await this.messagesService.create({
       id: crypto.randomUUID(),
       conversationId,
@@ -78,12 +81,6 @@ export class ChatService {
       content: '',
       status: MESSAGE_STATUS.PENDING,
     });
-
-    yield {
-      type: 'message',
-      messageId: userMessage.id,
-      role: CHAT_ROLES.USER,
-    };
 
     yield {
       type: 'message',
@@ -96,24 +93,16 @@ export class ChatService {
       MESSAGE_STATUS.STREAMING,
     );
 
+    const messages = await this.buildLlmMessages(conversationId);
+
     let generatedContent = '';
 
     try {
-      const messages = await this.buildLlmMessages(conversationId);
-
-      for await (const event of this.llmService.stream({
-        messages,
-        signal,
-      })) {
+      for await (const event of this.llmService.stream({ messages, signal })) {
         if (event.type === 'token') {
           generatedContent += event.content;
-
-          yield {
-            type: 'token',
-            content: event.content,
-          };
+          yield { type: 'token', content: event.content };
         }
-
         if (event.type === 'done') {
           break;
         }
@@ -124,6 +113,19 @@ export class ChatService {
         status: MESSAGE_STATUS.COMPLETED,
       });
 
+      await this.conversationsService.touchConversation(conversationId);
+
+      if (shouldGenerateTitle && !signal?.aborted) {
+        const title = await this.llmService.generateTitle(content);
+
+        if (title) {
+          await this.conversationsService.updateConversationTitle(
+            conversationId,
+            title,
+          );
+          yield { type: 'conversation_updated', conversationId, title };
+        }
+      }
       yield {
         type: 'done',
         messageId: assistantMessage.id,
@@ -134,12 +136,7 @@ export class ChatService {
           content: generatedContent,
           status: MESSAGE_STATUS.CANCELLED,
         });
-
-        yield {
-          type: 'cancelled',
-          messageId: assistantMessage.id,
-        };
-
+        yield { type: 'cancelled', messageId: assistantMessage.id };
         return;
       }
 
@@ -147,7 +144,6 @@ export class ChatService {
         content: generatedContent,
         status: MESSAGE_STATUS.FAILED,
       });
-
       yield {
         type: 'error',
         message:

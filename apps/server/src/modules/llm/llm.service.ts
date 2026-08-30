@@ -37,6 +37,9 @@ export class LlmService {
       ],
       temperature: LLM_TITLE_GENERATION.TEMPERATURE,
       maxTokens: LLM_TITLE_GENERATION.MAX_TOKENS,
+      chatTemplateKwargs: {
+        enable_thinking: false,
+      },
     });
   }
 }
