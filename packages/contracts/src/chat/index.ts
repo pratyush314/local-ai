@@ -8,6 +8,12 @@ export const chatStreamEventSchema = z.discriminatedUnion('type', [
 	}),
 
 	z.object({
+		type: z.literal('conversation_updated'),
+		conversationId: z.string().uuid(),
+		title: z.string(),
+	}),
+
+	z.object({
 		type: z.literal('message'),
 		messageId: z.string().uuid(),
 		role: z.enum(['user', 'assistant']),

@@ -32,7 +32,10 @@ export class ChatService {
       conversationId: conversation.id,
     };
 
-    yield* this.sendMessage(conversation.id, input.content, signal);
+    yield* this.sendMessage(conversation.id, input.content, {
+      signal: signal,
+      shouldGenerateTitle: true,
+    });
   }
 
   async *continueChat(
@@ -42,14 +45,22 @@ export class ChatService {
   ): AsyncIterable<ChatStreamEvent> {
     await this.conversationsService.getConversation(conversationId);
 
-    yield* this.sendMessage(conversationId, input.content, signal);
+    yield* this.sendMessage(conversationId, input.content, {
+      signal: signal,
+      shouldGenerateTitle: false,
+    });
   }
 
   private async *sendMessage(
     conversationId: string,
     content: string,
-    signal?: AbortSignal,
+    options?: {
+      signal?: AbortSignal;
+      shouldGenerateTitle?: boolean;
+    },
   ): AsyncIterable<ChatStreamEvent> {
+    const { signal, shouldGenerateTitle = false } = options ?? {};
+
     const userMessage = await this.messagesService.create({
       id: crypto.randomUUID(),
       conversationId,
