@@ -22,7 +22,7 @@ export class LlmService {
     return this.provider.stream(options);
   }
 
-  generateTitle(content: string): Promise<string> {
+  generateTitle(content: string, signal?: AbortSignal): Promise<string> {
     return this.generate({
       messages: [
         {
@@ -40,6 +40,7 @@ export class LlmService {
       chatTemplateKwargs: {
         enable_thinking: false,
       },
+      signal,
     });
   }
 }
