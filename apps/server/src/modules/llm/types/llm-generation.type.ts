@@ -10,4 +10,6 @@ export interface LlmGenerationOptions {
   stop?: string[];
 
   signal?: AbortSignal;
+
+  chatTemplateKwargs?: Record<string, unknown>;
 }

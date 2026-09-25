@@ -22,7 +22,7 @@ export class LlmService {
     return this.provider.stream(options);
   }
 
-  generateTitle(content: string): Promise<string> {
+  generateTitle(content: string, signal?: AbortSignal): Promise<string> {
     return this.generate({
       messages: [
         {
@@ -37,6 +37,10 @@ export class LlmService {
       ],
       temperature: LLM_TITLE_GENERATION.TEMPERATURE,
       maxTokens: LLM_TITLE_GENERATION.MAX_TOKENS,
+      chatTemplateKwargs: {
+        enable_thinking: false,
+      },
+      signal,
     });
   }
 }

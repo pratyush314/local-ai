@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import type {
   ChatStreamEvent,
@@ -15,6 +15,8 @@ import { MessagesService } from '../messages/messages.service';
 
 @Injectable()
 export class ChatService {
+  private readonly logger = new Logger(ChatService.name);
+
   constructor(
     private readonly conversationsService: ConversationsService,
     private readonly messagesService: MessagesService,
@@ -33,7 +35,7 @@ export class ChatService {
     };
 
     yield* this.sendMessage(conversation.id, input.content, {
-      signal: signal,
+      signal,
       shouldGenerateTitle: true,
     });
   }
@@ -46,7 +48,7 @@ export class ChatService {
     await this.conversationsService.getConversation(conversationId);
 
     yield* this.sendMessage(conversationId, input.content, {
-      signal: signal,
+      signal,
       shouldGenerateTitle: false,
     });
   }
@@ -71,6 +73,12 @@ export class ChatService {
 
     await this.conversationsService.touchConversation(conversationId);
 
+    yield {
+      type: 'message',
+      messageId: userMessage.id,
+      role: CHAT_ROLES.USER,
+    };
+
     const assistantMessage = await this.messagesService.create({
       id: crypto.randomUUID(),
       conversationId,
@@ -81,25 +89,24 @@ export class ChatService {
 
     yield {
       type: 'message',
-      messageId: userMessage.id,
-      role: CHAT_ROLES.USER,
-    };
-
-    yield {
-      type: 'message',
       messageId: assistantMessage.id,
       role: CHAT_ROLES.ASSISTANT,
     };
 
-    await this.messagesService.updateStatus(
-      assistantMessage.id,
-      MESSAGE_STATUS.STREAMING,
-    );
-
     let generatedContent = '';
 
     try {
+      /*
+       * Build the context before marking the assistant as streaming.
+       * If context preparation fails, the assistant remains PENDING
+       * instead of being incorrectly marked as STREAMING.
+       */
       const messages = await this.buildLlmMessages(conversationId);
+
+      await this.messagesService.updateStatus(
+        assistantMessage.id,
+        MESSAGE_STATUS.STREAMING,
+      );
 
       for await (const event of this.llmService.stream({
         messages,
@@ -112,10 +119,16 @@ export class ChatService {
             type: 'token',
             content: event.content,
           };
+
+          continue;
         }
 
         if (event.type === 'done') {
           break;
+        }
+
+        if (event.type === 'error') {
+          throw new Error(event.message);
         }
       }
 
@@ -124,10 +137,50 @@ export class ChatService {
         status: MESSAGE_STATUS.COMPLETED,
       });
 
+      await this.conversationsService.touchConversation(conversationId);
+
+      /*
+       * The assistant generation itself is now complete.
+       * Emit done before performing optional post-processing.
+       */
       yield {
         type: 'done',
         messageId: assistantMessage.id,
       };
+
+      /*
+       * Title generation is independent from assistant generation.
+       * A title failure must never turn a successful assistant
+       * response into a FAILED message.
+       */
+      if (shouldGenerateTitle && !signal?.aborted) {
+        try {
+          const title = await this.llmService.generateTitle(content, signal);
+
+          if (title) {
+            await this.conversationsService.updateConversationTitle(
+              conversationId,
+              title,
+            );
+
+            yield {
+              type: 'conversation_updated',
+              conversationId,
+              title,
+            };
+          }
+        } catch (error) {
+          if (signal?.aborted) {
+            return;
+          }
+
+          this.logger.warn(
+            `Failed to generate title for conversation "${conversationId}": ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          );
+        }
+      }
     } catch (error) {
       if (signal?.aborted) {
         await this.messagesService.update(assistantMessage.id, {
@@ -147,6 +200,12 @@ export class ChatService {
         content: generatedContent,
         status: MESSAGE_STATUS.FAILED,
       });
+
+      this.logger.error(
+        `Chat generation failed for conversation "${conversationId}": ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
 
       yield {
         type: 'error',
