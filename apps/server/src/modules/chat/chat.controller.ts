@@ -1,78 +1,91 @@
-import { Body, Controller, Param, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, Param, Post, Res, UsePipes } from '@nestjs/common';
 
-import type {
-  ContinueChatInput,
-  StartChatInput,
+import {
+  continueChatSchema,
+  startChatSchema,
+  type ContinueChatInput,
+  type StartChatInput,
 } from '@local-ai/contracts/chat';
 
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
+
+import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
 
 import { ChatService } from './chat.service';
+import { canWrite, setupSseResponse } from './lib/chat.lib';
 
 @Controller('chat')
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
   @Post()
+  @UsePipes(new ZodValidationPipe(startChatSchema))
   async startChat(
     @Body() input: StartChatInput,
-    @Req() request: Request,
     @Res() response: Response,
-  ) {
+  ): Promise<void> {
     const abortController = new AbortController();
 
     const abortGeneration = () => {
-      abortController.abort();
+      if (!abortController.signal.aborted) {
+        abortController.abort();
+      }
     };
 
-    request.on('close', abortGeneration);
+    const handleResponseClose = () => {
+      if (!response.writableEnded) {
+        abortGeneration();
+      }
+    };
 
-    response.setHeader('Content-Type', 'text/event-stream');
+    response.on('close', handleResponseClose);
 
-    response.setHeader('Cache-Control', 'no-cache');
-
-    response.setHeader('Connection', 'keep-alive');
-
-    response.flushHeaders();
+    setupSseResponse(response);
 
     try {
       for await (const event of this.chatService.startChat(
         input,
         abortController.signal,
       )) {
+        if (!canWrite(response)) {
+          break;
+        }
+
         response.write(`data: ${JSON.stringify(event)}\n\n`);
       }
     } finally {
-      request.off('close', abortGeneration);
+      response.off('close', handleResponseClose);
 
-      if (!response.writableEnded) {
+      if (!response.writableEnded && !response.destroyed) {
         response.end();
       }
     }
   }
 
   @Post(':conversationId/messages')
+  @UsePipes(new ZodValidationPipe(continueChatSchema))
   async continueChat(
     @Param('conversationId') conversationId: string,
     @Body() input: ContinueChatInput,
-    @Req() request: Request,
     @Res() response: Response,
-  ) {
+  ): Promise<void> {
     const abortController = new AbortController();
 
     const abortGeneration = () => {
-      abortController.abort();
+      if (!abortController.signal.aborted) {
+        abortController.abort();
+      }
     };
 
-    request.on('close', abortGeneration);
+    const handleResponseClose = () => {
+      if (!response.writableEnded) {
+        abortGeneration();
+      }
+    };
 
-    response.setHeader('Content-Type', 'text/event-stream');
+    response.on('close', handleResponseClose);
 
-    response.setHeader('Cache-Control', 'no-cache');
-
-    response.setHeader('Connection', 'keep-alive');
-
-    response.flushHeaders();
+    setupSseResponse(response);
 
     try {
       for await (const event of this.chatService.continueChat(
@@ -80,12 +93,16 @@ export class ChatController {
         input,
         abortController.signal,
       )) {
+        if (!canWrite(response)) {
+          break;
+        }
+
         response.write(`data: ${JSON.stringify(event)}\n\n`);
       }
     } finally {
-      request.off('close', abortGeneration);
+      response.off('close', handleResponseClose);
 
-      if (!response.writableEnded) {
+      if (!response.writableEnded && !response.destroyed) {
         response.end();
       }
     }

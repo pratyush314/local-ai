@@ -55,7 +55,11 @@ export const sendMessageSchema = z.object({
 export type SendMessageInput = z.infer<typeof sendMessageSchema>;
 
 export const startChatSchema = z.object({
-	content: z.string().trim().min(1).max(CHAT_MESSAGE_LIMITS.MAX_CONTENT_LENGTH),
+	content: z
+		.string()
+		.trim()
+		.min(1, { error: 'User prompt should not be empty' })
+		.max(CHAT_MESSAGE_LIMITS.MAX_CONTENT_LENGTH),
 });
 
 export type StartChatInput = z.infer<typeof startChatSchema>;
