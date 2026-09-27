@@ -43,7 +43,11 @@ export const chatStreamEventSchema = z.discriminatedUnion('type', [
 export type ChatStreamEvent = z.infer<typeof chatStreamEventSchema>;
 
 export const continueChatSchema = z.object({
-	content: z.string().trim().min(1).max(CHAT_MESSAGE_LIMITS.MAX_CONTENT_LENGTH),
+	content: z
+		.string()
+		.trim()
+		.min(1, { error: 'User prompt should not be empty' })
+		.max(CHAT_MESSAGE_LIMITS.MAX_CONTENT_LENGTH),
 });
 
 export type ContinueChatInput = z.infer<typeof continueChatSchema>;

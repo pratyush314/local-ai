@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Post, Res, UsePipes } from '@nestjs/common';
+import { Body, Controller, Param, Post, Res } from '@nestjs/common';
 
 import {
   continueChatSchema,
@@ -12,18 +12,25 @@ import type { Response } from 'express';
 import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
 
 import { ChatService } from './chat.service';
-import { canWrite, setupSseResponse } from './lib/chat.lib';
 
 @Controller('chat')
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
   @Post()
-  @UsePipes(new ZodValidationPipe(startChatSchema))
   async startChat(
-    @Body() input: StartChatInput,
+    @Body(new ZodValidationPipe(startChatSchema))
+    input: StartChatInput,
     @Res() response: Response,
   ): Promise<void> {
+    /**
+     * Reserve the generation BEFORE opening SSE.
+     *
+     * For a new conversation this cannot conflict because the
+     * conversation is created here.
+     */
+    const prepared = await this.chatService.prepareStartChat();
+
     const abortController = new AbortController();
 
     const abortGeneration = () => {
@@ -40,14 +47,14 @@ export class ChatController {
 
     response.on('close', handleResponseClose);
 
-    setupSseResponse(response);
+    this.setupSseResponse(response);
 
     try {
-      for await (const event of this.chatService.startChat(
+      for await (const event of prepared.stream(
         input,
         abortController.signal,
       )) {
-        if (!canWrite(response)) {
+        if (!this.canWrite(response)) {
           break;
         }
 
@@ -63,12 +70,21 @@ export class ChatController {
   }
 
   @Post(':conversationId/messages')
-  @UsePipes(new ZodValidationPipe(continueChatSchema))
   async continueChat(
     @Param('conversationId') conversationId: string,
-    @Body() input: ContinueChatInput,
+    @Body(new ZodValidationPipe(continueChatSchema))
+    input: ContinueChatInput,
     @Res() response: Response,
   ): Promise<void> {
+    /**
+     * IMPORTANT:
+     *
+     * This happens BEFORE setupSseResponse().
+     *
+     * Therefore ConflictException can still become a normal HTTP 409.
+     */
+    const prepared = await this.chatService.prepareContinueChat(conversationId);
+
     const abortController = new AbortController();
 
     const abortGeneration = () => {
@@ -85,15 +101,14 @@ export class ChatController {
 
     response.on('close', handleResponseClose);
 
-    setupSseResponse(response);
+    this.setupSseResponse(response);
 
     try {
-      for await (const event of this.chatService.continueChat(
-        conversationId,
+      for await (const event of prepared.stream(
         input,
         abortController.signal,
       )) {
-        if (!canWrite(response)) {
+        if (!this.canWrite(response)) {
           break;
         }
 
@@ -106,5 +121,19 @@ export class ChatController {
         response.end();
       }
     }
+  }
+
+  private setupSseResponse(response: Response): void {
+    response.setHeader('Content-Type', 'text/event-stream');
+
+    response.setHeader('Cache-Control', 'no-cache');
+
+    response.setHeader('Connection', 'keep-alive');
+
+    response.flushHeaders();
+  }
+
+  private canWrite(response: Response): boolean {
+    return !response.writableEnded && !response.destroyed;
   }
 }
