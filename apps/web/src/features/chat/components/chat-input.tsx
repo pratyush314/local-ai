@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 import { StopGenerationButton } from './stop-generation-button';
+import { Textarea } from '@/components/ui/textarea';
 
 interface ChatInputProps {
 	onSend?: (content: string) => void;
@@ -68,7 +69,7 @@ export function ChatInput({
 				)}
 			>
 				<div className="px-3 pt-3">
-					<textarea
+					<Textarea
 						ref={textareaRef}
 						value={value}
 						onChange={handleChange}
@@ -76,7 +77,7 @@ export function ChatInput({
 						disabled={disabled || isGenerating}
 						rows={1}
 						placeholder="Message Local AI..."
-						className="max-h-[200px] min-h-12 w-full resize-none border-0 bg-transparent px-1 py-2 text-sm leading-6 outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-60"
+						className="max-h-50 min-h-12 w-full resize-none border-0 bg-transparent px-1 py-2 text-sm leading-6 outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-60"
 					/>
 				</div>
 
