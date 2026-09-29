@@ -12,3 +12,10 @@ export interface ChatMessage {
 	content: string;
 	status: ChatMessageStatus;
 }
+
+export interface ChatState {
+	conversationId: string | null;
+	messages: ChatMessage[];
+	title: string;
+	isGenerating: boolean;
+}
