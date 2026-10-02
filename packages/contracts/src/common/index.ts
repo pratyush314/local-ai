@@ -1,2 +1,2 @@
-export * from './api-response.schema';
-export * from './pagination.schema';
+export * from './api-response.schema.js';
+export * from './pagination.schema.js';
