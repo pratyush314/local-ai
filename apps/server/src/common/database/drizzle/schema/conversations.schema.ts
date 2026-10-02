@@ -1,6 +1,6 @@
 import { index, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
-import { timestamps } from './base-columns';
+import { timestamps } from './base-columns.js';
 
 export const conversations = sqliteTable(
   'conversations',

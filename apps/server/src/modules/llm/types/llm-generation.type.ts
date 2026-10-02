@@ -1,4 +1,4 @@
-import type { LlmMessage } from './llm-message.type';
+import type { LlmMessage } from './llm-message.type.js';
 
 export interface LlmGenerationOptions {
   messages: LlmMessage[];

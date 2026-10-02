@@ -9,9 +9,9 @@ import {
 
 import type { Response } from 'express';
 
-import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
+import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
 
-import { ChatService } from './chat.service';
+import { ChatService } from './chat.service.js';
 
 @Controller('chat')
 export class ChatController {

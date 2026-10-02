@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { desc, eq } from 'drizzle-orm';
 
-import { DatabaseService } from '@/common/database/database.service';
+import { DatabaseService } from '../../common/database/database.service.js';
 import {
   Conversation,
   conversations,
   type NewConversation,
-} from '@/common/database/drizzle/schema';
+} from '../../common/database/drizzle/schema/index.js';
 
 @Injectable()
 export class ConversationsRepository {

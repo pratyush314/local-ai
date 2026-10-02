@@ -1,11 +1,11 @@
 import { Global, Module } from '@nestjs/common';
 
-import { AppConfigModule } from '@/common/config/app-config.module';
-import { AppConfigService } from '@/common/config/app-config.service';
+import { AppConfigModule } from '../config/app-config.module.js';
+import { AppConfigService } from '../config/app-config.service.js';
 
-import { DATABASE_CLIENT } from './database.constants';
-import { DatabaseService } from './database.service';
-import { createDatabaseClient } from './drizzle/client';
+import { DATABASE_CLIENT } from './database.constants.js';
+import { DatabaseService } from './database.service.js';
+import { createDatabaseClient } from './drizzle/client.js';
 
 @Global()
 @Module({

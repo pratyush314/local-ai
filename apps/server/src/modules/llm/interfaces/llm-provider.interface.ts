@@ -1,5 +1,5 @@
-import { LlmGenerationOptions } from '../types/llm-generation.type';
-import { LlmStreamEvent } from '../types/llm-stream.type';
+import { LlmGenerationOptions } from '../types/llm-generation.type.js';
+import { LlmStreamEvent } from '../types/llm-stream.type.js';
 
 export interface LlmProvider {
   generate(options: LlmGenerationOptions): Promise<string>;

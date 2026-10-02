@@ -1,7 +1,7 @@
 import { Controller, Post, Req, Res } from '@nestjs/common';
 import type { Request, Response } from 'express';
 
-import { LlmService } from './llm.service';
+import { LlmService } from './llm.service.js';
 
 @Controller('llm')
 export class LlmController {

@@ -8,10 +8,10 @@ import type {
 
 import { CHAT_ROLES, MESSAGE_STATUS } from '@local-ai/constants/chat';
 
-import { ConversationsService } from '../conversations/conversations.service';
-import { LlmService } from '../llm/llm.service';
-import type { LlmMessage } from '../llm/types/llm-message.type';
-import { MessagesService } from '../messages/messages.service';
+import { ConversationsService } from '../conversations/conversations.service.js';
+import { LlmService } from '../llm/llm.service.js';
+import type { LlmMessage } from '../llm/types/llm-message.type.js';
+import { MessagesService } from '../messages/messages.service.js';
 
 @Injectable()
 export class ChatService {

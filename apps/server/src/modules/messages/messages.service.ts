@@ -3,11 +3,11 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import type {
   Message,
   NewMessage,
-} from '@/common/database/drizzle/schema/messages.schema';
+} from '../../common/database/drizzle/schema/messages.schema.js';
 
 import type { MessageStatus } from '@local-ai/constants/chat';
 
-import { MessagesRepository } from './messages.repository';
+import { MessagesRepository } from './messages.repository.js';
 
 @Injectable()
 export class MessagesService {

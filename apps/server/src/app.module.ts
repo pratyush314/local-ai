@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { AppConfigModule } from '@/common/config/app-config.module';
-import { DatabaseModule } from '@/common/database/database.module';
-import { ConversationsModule } from '@/modules/conversations/conversations.module';
-import { LlmModule } from '@/modules/llm/llm.module';
-import { ChatModule } from './modules/chat/chat.module';
+import { AppController } from './app.controller.js';
+import { AppService } from './app.service.js';
+import { AppConfigModule } from './common/config/app-config.module.js';
+import { DatabaseModule } from './common/database/database.module.js';
+import { ConversationsModule } from './modules/conversations/conversations.module.js';
+import { LlmModule } from './modules/llm/llm.module.js';
+import { ChatModule } from './modules/chat/chat.module.js';
 
 @Module({
   imports: [

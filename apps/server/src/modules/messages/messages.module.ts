@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 
-import { DatabaseModule } from '@/common/database/database.module';
+import { DatabaseModule } from '../../common/database/database.module.js';
 
-import { MessagesRepository } from './messages.repository';
-import { MessagesService } from './messages.service';
+import { MessagesRepository } from './messages.repository.js';
+import { MessagesService } from './messages.service.js';
 
 @Module({
   imports: [DatabaseModule],

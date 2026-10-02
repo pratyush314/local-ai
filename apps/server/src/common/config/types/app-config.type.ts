@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { envValidationSchema } from '../env-validation.config';
+import { envValidationSchema } from '../env-validation.config.js';
 
 export type EnvConfig = z.infer<typeof envValidationSchema>;
 

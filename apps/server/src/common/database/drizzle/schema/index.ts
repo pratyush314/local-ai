@@ -1,5 +1,5 @@
-export * from './base-columns';
-export * from './conversations.schema';
-export * from './messages.schema';
+export * from './base-columns.js';
+export * from './conversations.schema.js';
+export * from './messages.schema.js';
 
-export * from '../relations';
+export * from '../relations/index.js';

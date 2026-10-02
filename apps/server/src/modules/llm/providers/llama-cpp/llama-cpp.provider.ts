@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 
-import { LlamaCppClient } from '../../clients/llama-cpp/llama-cpp.client';
-import type { LlmProvider } from '../../interfaces/llm-provider.interface';
-import type { LlmGenerationOptions } from '../../types/llm-generation.type';
-import type { LlmStreamEvent } from '../../types/llm-stream.type';
+import { LlamaCppClient } from '../../clients/llama-cpp/llama-cpp.client.js';
+import type { LlmProvider } from '../../interfaces/llm-provider.interface.js';
+import type { LlmGenerationOptions } from '../../types/llm-generation.type.js';
+import type { LlmStreamEvent } from '../../types/llm-stream.type.js';
 
 @Injectable()
 export class LlamaCppProvider implements LlmProvider {

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
-import { ConversationsRepository } from './conversations.repository';
+import { ConversationsRepository } from './conversations.repository.js';
 
 @Injectable()
 export class ConversationsService {

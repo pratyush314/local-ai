@@ -2,8 +2,8 @@ import { index, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 import { CHAT_ROLES, MESSAGE_STATUS } from '@local-ai/constants/chat';
 
-import { timestamps } from './base-columns';
-import { conversations } from './conversations.schema';
+import { timestamps } from './base-columns.js';
+import { conversations } from './conversations.schema.js';
 
 export const messages = sqliteTable(
   'messages',
