@@ -5,10 +5,6 @@
 
     "target": "ES2023",
 
-    "paths": {
-      "@/*": ["./src/*"]
-    },
-
     "rootDir": ".",
     "outDir": "./dist",
 

@@ -1,9 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import type { LlmProvider } from './interfaces/llm-provider.interface';
-import type { LlmGenerationOptions } from './types/llm-generation.type';
-import type { LlmStreamEvent } from './types/llm-stream.type';
-import { LLM_TITLE_GENERATION } from './constants/llm.constants';
+import type { LlmProvider } from './interfaces/llm-provider.interface.js';
+import type { LlmGenerationOptions } from './types/llm-generation.type.js';
+import type { LlmStreamEvent } from './types/llm-stream.type.js';
+import { LLM_TITLE_GENERATION } from './constants/llm.constants.js';
 
 export const LLM_PROVIDER = Symbol('LLM_PROVIDER');
 

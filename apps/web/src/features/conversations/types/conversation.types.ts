@@ -1,5 +1,4 @@
-export interface Conversation {
-	id: string;
-	title: string;
-	updatedAt: string;
-}
+export type {
+  Conversation,
+  Conversations,
+} from '@local-ai/contracts/conversation';

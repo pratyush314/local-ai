@@ -1,9 +1,9 @@
 import BetterSqlite3 from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 
-import { AppConfigService } from '@/common/config/app-config.service';
+import { AppConfigService } from '../../config/app-config.service.js';
 
-import * as schema from './schema';
+import * as schema from './schema/index.js';
 
 export function createDatabaseClient(configService: AppConfigService) {
   const databaseUrl = configService.getOrThrow('DATABASE_URL');

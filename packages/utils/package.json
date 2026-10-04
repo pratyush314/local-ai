@@ -3,13 +3,19 @@
 	"version": "1.0.0",
 	"private": true,
 	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
 	"exports": {
-		".": "./src/index.ts",
-		"./object": "./src/object/index.ts",
-		"./string": "./src/string/index.ts",
-		"./validation": "./src/validation/index.ts"
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./object": "./dist/object/index.js",
+		"./string": "./dist/string/index.js",
+		"./validation": "./dist/validation/index.js"
 	},
 	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
 		"typecheck": "tsc --noEmit"
 	},
 	"devDependencies": {

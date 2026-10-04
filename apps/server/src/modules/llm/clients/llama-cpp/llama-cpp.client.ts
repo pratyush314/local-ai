@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 
-import { AppConfigService } from '@/common/config/app-config.service';
+import { AppConfigService } from '../../../../common/config/app-config.service.js';
 import { AI_DEFAULTS } from '@local-ai/constants/ai';
 
-import type { LlmGenerationOptions } from '../../types/llm-generation.type';
-import type { LlmStreamEvent } from '../../types/llm-stream.type';
+import type { LlmGenerationOptions } from '../../types/llm-generation.type.js';
+import type { LlmStreamEvent } from '../../types/llm-stream.type.js';
 import {
   LlamaCppResponse,
   LlamaCppStreamResponse,
-} from './llama-cpp.interface';
+} from './llama-cpp.interface.js';
 
 @Injectable()
 export class LlamaCppClient {

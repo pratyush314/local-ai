@@ -3,16 +3,22 @@
 	"version": "1.0.0",
 	"private": true,
 	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
 	"exports": {
-		".": "./src/index.ts",
-		"./common": "./src/common/index.ts",
-		"./chat": "./src/chat/index.ts",
-		"./conversation": "./src/conversation/index.ts",
-		"./document": "./src/document/index.ts",
-		"./file": "./src/file/index.ts",
-		"./workspace": "./src/workspace/index.ts"
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		},
+		"./common": "./dist/common/index.js",
+		"./chat": "./dist/chat/index.js",
+		"./conversation": "./dist/conversation/index.js",
+		"./document": "./dist/document/index.js",
+		"./file": "./dist/file/index.js",
+		"./workspace": "./dist/workspace/index.js"
 	},
 	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {

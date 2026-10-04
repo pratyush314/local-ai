@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 
-import { ConversationsController } from './conversations.controller';
-import { ConversationsRepository } from './conversations.repository';
-import { ConversationsService } from './conversations.service';
-import { DatabaseModule } from '@/common/database/database.module';
+import { ConversationsController } from './conversations.controller.js';
+import { ConversationsRepository } from './conversations.repository.js';
+import { ConversationsService } from './conversations.service.js';
+import { DatabaseModule } from '../../common/database/database.module.js';
 
 @Module({
   imports: [DatabaseModule],
