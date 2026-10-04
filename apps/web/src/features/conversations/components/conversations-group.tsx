@@ -6,12 +6,14 @@ interface ConversationGroupProps {
 	conversations: Conversation[];
 	activeConversationId: string | null;
 	onSelect?: (id: string) => void;
+	handleDeleteConversation: (conversationId: string) => Promise<void>;
 }
 export function ConversationGroup({
 	title,
 	conversations,
 	activeConversationId,
 	onSelect,
+	handleDeleteConversation,
 }: ConversationGroupProps) {
 	return (
 		<section className="mb-5">
@@ -26,6 +28,7 @@ export function ConversationGroup({
 						conversation={conversation}
 						active={activeConversationId === conversation.id}
 						onClick={() => onSelect?.(conversation.id)}
+						onDelete={() => handleDeleteConversation(conversation.id)}
 					/>
 				))}
 			</div>

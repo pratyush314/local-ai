@@ -510,25 +510,6 @@ export function useChatStream({
 	}, []);
 
 	/**
-	 * Reset the current chat locally.
-	 *
-	 * AppShell is responsible for setting activeConversationId
-	 * to null. This function only resets the hook's local state.
-	 */
-	const newChat = useCallback(() => {
-		++runIdRef.current;
-
-		abortControllerRef.current?.abort();
-		abortControllerRef.current = null;
-
-		skipNextLoadRef.current = null;
-
-		setLoadErrorState(null);
-
-		setState(initialState);
-	}, []);
-
-	/**
 	 * Cleanup when ChatPage unmounts.
 	 */
 	useEffect(() => {
@@ -553,6 +534,5 @@ export function useChatStream({
 
 		sendMessage,
 		stopGeneration,
-		newChat,
 	};
 }
