@@ -1,17 +1,12 @@
-export type ChatMessageRole = 'user' | 'assistant';
+import type { ConversationMessage } from '@local-ai/contracts/chat';
 
-export type ChatMessageStatus =
-	| 'streaming'
-	| 'completed'
-	| 'failed'
-	| 'cancelled';
+export type ChatMessage = Pick<
+	ConversationMessage,
+	'id' | 'role' | 'content' | 'status'
+>;
 
-export interface ChatMessage {
-	id: string;
-	role: ChatMessageRole;
-	content: string;
-	status: ChatMessageStatus;
-}
+export type ChatMessageRole = ChatMessage['role'];
+export type ChatMessageStatus = ChatMessage['status'];
 
 export interface ChatState {
 	conversationId: string | null;

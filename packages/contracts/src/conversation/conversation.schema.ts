@@ -10,4 +10,8 @@ export const conversationSchema = z.object({
 	updatedAt: z.string(),
 });
 
+export const deleteConversationSchema = z.object({
+	success: z.literal(true),
+});
+
 export type Conversation = z.infer<typeof conversationSchema>;

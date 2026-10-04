@@ -1,6 +1,8 @@
 import {
 	chatStreamEventSchema,
 	continueChatSchema,
+	ConversationMessages,
+	conversationMessagesSchema,
 	startChatSchema,
 	type ChatStreamEvent,
 	type ContinueChatInput,
@@ -8,6 +10,7 @@ import {
 } from '@local-ai/contracts/chat';
 
 import { sseClient } from '@/lib/api/sseClient';
+import { apiClient } from '@/lib/api/apiClient';
 
 export function startChat(
 	input: StartChatInput,
@@ -35,5 +38,15 @@ export function continueChat(
 		bodySchema: continueChatSchema,
 		eventSchema: chatStreamEventSchema,
 		signal,
+	});
+}
+
+export function getConversationMessages(
+	conversationId: string,
+): Promise<ConversationMessages> {
+	return apiClient({
+		path: `/conversations/${conversationId}/messages`,
+		method: 'GET',
+		responseSchema: conversationMessagesSchema,
 	});
 }
