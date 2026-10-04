@@ -12,21 +12,30 @@ interface ConversationSidebarProps {
 	refreshVersion?: number;
 	onSelectConversation?: (conversationId: string) => void;
 	onNewChat?: () => void;
+	onDeleteConversation?: (conversationId: string) => void;
 }
 export function ConversationSidebar({
 	activeConversationId = null,
 	refreshVersion = 0,
 	onSelectConversation,
 	onNewChat,
+	onDeleteConversation,
 }: ConversationSidebarProps) {
-	const { conversations, isLoading, error } = useConversations({
-		refreshVersion,
-	});
+	const { conversations, isLoading, error, removeConversation } =
+		useConversations({
+			refreshVersion,
+		});
 
 	const groups = useMemo(
 		() => groupConversations(conversations),
 		[conversations],
 	);
+
+	const handleDeleteConversation = async (conversationId: string) => {
+		await removeConversation(conversationId);
+
+		onDeleteConversation?.(conversationId);
+	};
 
 	return (
 		<div className="flex h-full min-h-0 flex-col">
@@ -62,6 +71,7 @@ export function ConversationSidebar({
 							conversations={group.conversations}
 							activeConversationId={activeConversationId}
 							onSelect={onSelectConversation}
+							handleDeleteConversation={handleDeleteConversation}
 						/>
 					))}
 			</div>

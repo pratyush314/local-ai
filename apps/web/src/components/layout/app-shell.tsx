@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useCallback, type ReactNode } from 'react';
 
 import { ConversationSidebar } from '@/features/conversations/components/conversation-sidebar';
 
@@ -27,6 +27,15 @@ function AppShellContent({ children }: AppShellProps) {
 		startNewChat,
 	} = useAppShell();
 
+	const handleDeleteConversation = useCallback(
+		(conversationId: string) => {
+			if (activeConversationId === conversationId) {
+				startNewChat();
+			}
+		},
+		[activeConversationId, startNewChat],
+	);
+
 	return (
 		<div className="flex h-svh w-full overflow-hidden bg-background text-foreground">
 			<aside className="hidden w-64 shrink-0 border-r bg-sidebar md:flex md:flex-col">
@@ -40,6 +49,7 @@ function AppShellContent({ children }: AppShellProps) {
 						refreshVersion={refreshVersion}
 						onSelectConversation={selectConversation}
 						onNewChat={startNewChat}
+						onDeleteConversation={handleDeleteConversation}
 					/>
 				</div>
 
