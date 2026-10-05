@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 import { ConversationSidebar } from '@/features/conversations/components/conversation-sidebar';
+import { useConversationNavigation } from '@/features/conversations/hooks/use-conversation-navigation';
 
 import { AppShellProvider, useAppShell } from './app-shell-context';
 import { SidebarFooter } from './sidebar-footer';
@@ -20,21 +21,13 @@ export function AppShell({ children }: AppShellProps) {
 }
 
 function AppShellContent({ children }: AppShellProps) {
-	const {
-		activeConversationId,
-		refreshVersion,
-		selectConversation,
-		startNewChat,
-	} = useAppShell();
+	const { activeConversationId, refreshVersion } = useAppShell();
 
-	const handleDeleteConversation = useCallback(
-		(conversationId: string) => {
-			if (activeConversationId === conversationId) {
-				startNewChat();
-			}
-		},
-		[activeConversationId, startNewChat],
-	);
+	const {
+		handleSelectConversation,
+		handleStartNewChat,
+		handleConversationDeleted,
+	} = useConversationNavigation();
 
 	return (
 		<div className="flex h-svh w-full overflow-hidden bg-background text-foreground">
@@ -47,9 +40,9 @@ function AppShellContent({ children }: AppShellProps) {
 					<ConversationSidebar
 						activeConversationId={activeConversationId}
 						refreshVersion={refreshVersion}
-						onSelectConversation={selectConversation}
-						onNewChat={startNewChat}
-						onDeleteConversation={handleDeleteConversation}
+						onSelectConversation={handleSelectConversation}
+						onNewChat={handleStartNewChat}
+						onDeleteConversation={handleConversationDeleted}
 					/>
 				</div>
 

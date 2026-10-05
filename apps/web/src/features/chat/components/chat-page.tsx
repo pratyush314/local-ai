@@ -2,27 +2,16 @@
 
 import { useCallback } from 'react';
 
-import { MobileSidebar } from '@/components/layout/mobile-sidebar';
 import { useAppShell } from '@/components/layout/app-shell-context';
+import { MobileSidebar } from '@/components/layout/mobile-sidebar';
 
 import { useChatStream } from '../hooks/use-chat-stream';
 import { ChatInput } from './chat-input';
 import { MessageList } from './message-list';
 
 export function ChatPage() {
-	const {
-		activeConversationId,
-		selectConversation,
-		startNewChat,
-		markConversationsChanged,
-	} = useAppShell();
-
-	const handleConversationChange = useCallback(
-		(conversationId: string) => {
-			selectConversation(conversationId);
-		},
-		[selectConversation],
-	);
+	const { activeConversationId, selectConversation, markConversationsChanged } =
+		useAppShell();
 
 	const handleConversationUpdated = useCallback(() => {
 		markConversationsChanged();
@@ -38,7 +27,7 @@ export function ChatPage() {
 		stopGeneration,
 	} = useChatStream({
 		conversationId: activeConversationId,
-		onConversationChange: handleConversationChange,
+		onConversationChange: selectConversation,
 		onConversationUpdated: handleConversationUpdated,
 	});
 
@@ -47,7 +36,7 @@ export function ChatPage() {
 			<header className="flex h-14 shrink-0 items-center border-b px-3 md:px-4">
 				<div className="flex min-w-0 items-center gap-2">
 					<div className="md:hidden">
-						<MobileSidebar onNewChat={startNewChat} />
+						<MobileSidebar />
 					</div>
 
 					<div className="min-w-0">

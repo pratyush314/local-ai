@@ -1,7 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Menu } from 'lucide-react';
+
+import { ConversationSidebar } from '@/features/conversations/components/conversation-sidebar';
+import { useConversationNavigation } from '@/features/conversations/hooks/use-conversation-navigation';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -11,20 +14,22 @@ import {
 	SheetTitle,
 	SheetTrigger,
 } from '@/components/ui/sheet';
+
 import { SidebarFooter } from './sidebar-footer';
-import { ConversationSidebar } from '@/features/conversations/components/conversation-sidebar';
 
-interface MobileSidebarProps {
-	onNewChat?: () => void;
-}
-
-export function MobileSidebar({ onNewChat }: MobileSidebarProps) {
+export function MobileSidebar() {
 	const [open, setOpen] = useState(false);
 
-	const handleNewChat = () => {
+	const handleClose = useCallback(() => {
 		setOpen(false);
-		onNewChat?.();
-	};
+	}, []);
+
+	const {
+		activeConversationId,
+		handleSelectConversation,
+		handleStartNewChat,
+		handleConversationDeleted,
+	} = useConversationNavigation(handleClose);
 
 	return (
 		<Sheet open={open} onOpenChange={setOpen}>
@@ -43,7 +48,12 @@ export function MobileSidebar({ onNewChat }: MobileSidebarProps) {
 
 				<div className="flex min-h-0 flex-1 flex-col">
 					<div className="min-h-0 flex-1">
-						<ConversationSidebar onNewChat={handleNewChat} />
+						<ConversationSidebar
+							activeConversationId={activeConversationId}
+							onSelectConversation={handleSelectConversation}
+							onNewChat={handleStartNewChat}
+							onDeleteConversation={handleConversationDeleted}
+						/>
 					</div>
 
 					<div className="border-t p-3">
