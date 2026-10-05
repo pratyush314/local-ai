@@ -1,13 +1,12 @@
 'use client';
 
-import { KeyboardEvent, useRef, useState } from 'react';
+import { useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react';
 import { ArrowUp } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-
-import { StopGenerationButton } from './stop-generation-button';
 import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
+import { StopGenerationButton } from '../buttons/stop-generation-button';
 
 interface ChatInputProps {
 	onSend?: (content: string) => void;
@@ -51,7 +50,7 @@ export function ChatInput({
 		}
 	};
 
-	const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+	const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
 		const textarea = event.target;
 
 		setValue(textarea.value);
@@ -65,7 +64,7 @@ export function ChatInput({
 			<div
 				className={cn(
 					'rounded-2xl border bg-background shadow-sm',
-					'focus-within:ring-2 focus-within:ring-ring/20',
+					'transition-shadow',
 				)}
 			>
 				<div className="px-3 pt-3">
@@ -77,7 +76,17 @@ export function ChatInput({
 						disabled={disabled || isGenerating}
 						rows={1}
 						placeholder="Message Local AI..."
-						className="max-h-50 min-h-12 w-full resize-none border-0 bg-transparent px-1 py-2 text-sm leading-6 outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-60"
+						className={cn(
+							'min-h-12 max-h-50 w-full resize-none',
+							'border-0 bg-transparent px-1 py-2',
+							'text-sm leading-6',
+							'outline-none ring-0',
+							'focus:border-0 focus:outline-none focus:ring-0',
+							'focus-visible:border-0 focus-visible:outline-none',
+							'focus-visible:ring-0',
+							'placeholder:text-muted-foreground',
+							'disabled:cursor-not-allowed disabled:opacity-60',
+						)}
 					/>
 				</div>
 
