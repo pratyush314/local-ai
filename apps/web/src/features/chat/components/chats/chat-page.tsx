@@ -5,9 +5,9 @@ import { useCallback } from 'react';
 import { useAppShell } from '@/components/layout/app-shell-context';
 import { MobileSidebar } from '@/components/layout/mobile-sidebar';
 
-import { useChatStream } from '../hooks/use-chat-stream';
 import { ChatInput } from './chat-input';
-import { MessageList } from './message-list';
+import { useChatStream } from '../../hooks/use-chat-stream';
+import { MessageList } from '../messages/message-list';
 
 export function ChatPage() {
 	const { activeConversationId, selectConversation, markConversationsChanged } =

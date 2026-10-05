@@ -5,7 +5,7 @@ import { Bot, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 import { MessageContent } from './message-content';
-import type { ChatMessage } from '../types/chat.types';
+import type { ChatMessage } from '../../types/chat.types';
 
 interface MessageItemProps {
 	message: ChatMessage;
