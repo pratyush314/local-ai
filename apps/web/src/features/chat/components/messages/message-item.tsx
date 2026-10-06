@@ -18,8 +18,8 @@ export function MessageItem({ message }: MessageItemProps) {
 	const isCancelled = message.status === 'cancelled';
 
 	return (
-		<article className={cn('group w-full', isUser ? 'py-3' : 'py-5')}>
-			<div className="mx-auto flex w-full max-w-3xl gap-3 px-4">
+		<article className={cn('group w-full', isUser ? 'py-4' : 'py-6')}>
+			<div className="mx-auto flex w-full max-w-4xl gap-4 px-4">
 				<div
 					className={cn(
 						'mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full border',
@@ -34,7 +34,7 @@ export function MessageItem({ message }: MessageItemProps) {
 				</div>
 
 				<div className="min-w-0 flex-1">
-					<div className="mb-1 text-xs font-medium text-muted-foreground">
+					<div className="mb-1.5 text-sm font-medium text-muted-foreground">
 						{isUser ? 'You' : 'Local AI'}
 					</div>
 
