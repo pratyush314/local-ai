@@ -30,8 +30,14 @@ export function CodeBlock({ code, language }: CodeBlockProps) {
 	};
 
 	return (
-		<div className="my-4 overflow-hidden rounded-xl border bg-[#0d1117]">
-			<div className="flex h-9 items-center justify-between border-b border-white/10 px-3">
+		<div
+			className="my-4 overflow-hidden rounded-xl border"
+			style={{
+				backgroundColor: 'var(--code-background)',
+				color: 'var(--code-foreground)',
+			}}
+		>
+			<div className="flex h-9 items-center justify-between border-b border-border/50 px-3">
 				<span className="font-mono text-xs text-white/60">
 					{language || 'code'}
 				</span>

@@ -18,16 +18,16 @@ export function MessageContent({
 	return (
 		<div
 			className={cn(
-				'min-w-0 text-sm leading-7',
+				'min-w-0 text-[15px] leading-7 md:text-base',
 
-				'[&_p]:mb-4',
+				'[&_p]:mb-5',
 				'[&_p:last-child]:mb-0',
 
-				'[&_ul]:mb-4',
+				'[&_ul]:mb-5',
 				'[&_ul]:ml-6',
 				'[&_ul]:list-disc',
 
-				'[&_ol]:mb-4',
+				'[&_ol]:mb-5',
 				'[&_ol]:ml-6',
 				'[&_ol]:list-decimal',
 
@@ -93,7 +93,7 @@ function MarkdownCode({ children, className }: MarkdownCodeProps) {
 
 	if (!language) {
 		return (
-			<code className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-[0.85em]">
+			<code className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-[1em]">
 				{children}
 			</code>
 		);

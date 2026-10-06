@@ -1,12 +1,25 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, JetBrains_Mono, Source_Serif_4 } from 'next/font/google';
 
 import '@/app/globals.css';
 
 import { ThemeProvider } from '@/providers/theme-provider';
 
-const inter = Inter({
-	variable: '--font-inter',
+const anthropicSans = Inter({
+	variable: '--font-anthropic-sans',
+	subsets: ['latin'],
+	display: 'swap',
+});
+
+const anthropicSerif = Source_Serif_4({
+	variable: '--font-anthropic-serif',
+	subsets: ['latin'],
+	display: 'swap',
+	weight: ['400', '500', '600'],
+});
+
+const jetBrainsMono = JetBrains_Mono({
+	variable: '--font-code',
 	subsets: ['latin'],
 	display: 'swap',
 });
@@ -23,7 +36,9 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="en" suppressHydrationWarning>
-			<body className={`${inter.variable} antialiased`}>
+			<body
+				className={`${anthropicSans.variable} ${anthropicSerif.variable} ${jetBrainsMono.variable} antialiased`}
+			>
 				<ThemeProvider
 					attribute="class"
 					defaultTheme="dark"

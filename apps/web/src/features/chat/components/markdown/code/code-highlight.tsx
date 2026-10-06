@@ -1,5 +1,6 @@
 'use client';
 
+import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 import { codeToHtml } from 'shiki';
 
@@ -10,6 +11,7 @@ interface CodeHighlightProps {
 
 export function CodeHighlight({ code, language }: CodeHighlightProps) {
 	const [html, setHtml] = useState<string | null>(null);
+	const { theme } = useTheme();
 
 	useEffect(() => {
 		let cancelled = false;
@@ -18,7 +20,7 @@ export function CodeHighlight({ code, language }: CodeHighlightProps) {
 			try {
 				const result = await codeToHtml(code, {
 					lang: normalizeLanguage(language),
-					theme: 'github-dark',
+					theme: theme === 'dark' ? 'github-dark' : 'github-light',
 				});
 
 				if (!cancelled) {
@@ -36,7 +38,7 @@ export function CodeHighlight({ code, language }: CodeHighlightProps) {
 		return () => {
 			cancelled = true;
 		};
-	}, [code, language]);
+	}, [code, language, theme]);
 
 	if (!html) {
 		return (
