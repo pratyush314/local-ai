@@ -109,6 +109,8 @@
 	--sidebar-border: rgba(31, 30, 29, 0.07);
 	--sidebar-ring: #d97757;
 
+	--user-message: #f0f0ef;
+
 	--chart-1: #d97757;
 	--chart-2: #898781;
 	--chart-3: #3d3d3a;
@@ -165,6 +167,8 @@
 	--sidebar-accent-foreground: #f0efec;
 	--sidebar-border: rgba(240, 239, 236, 0.07);
 	--sidebar-ring: #d97757;
+
+	--user-message: #212121;
 
 	--chart-1: #d97757;
 	--chart-2: #c3c2b7;
