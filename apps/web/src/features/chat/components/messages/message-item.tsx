@@ -1,11 +1,12 @@
 'use client';
 
-import { Bot, User } from 'lucide-react';
+import { Bot } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
-import { MessageContent } from './message-content';
 import type { ChatMessage } from '../../types/chat.types';
+import { MessageActions } from './message-actions';
+import { MessageContent } from './message-content';
 
 interface MessageItemProps {
 	message: ChatMessage;
@@ -17,25 +18,37 @@ export function MessageItem({ message }: MessageItemProps) {
 	const isFailed = message.status === 'failed';
 	const isCancelled = message.status === 'cancelled';
 
+	if (isUser) {
+		return (
+			<article className="group w-full py-4">
+				<div className="mx-auto flex w-full max-w-4xl justify-end px-4">
+					<div className="flex max-w-[80%] flex-col items-end">
+						<div
+							className={cn(
+								'rounded-2xl rounded-br-md px-4 py-3',
+								'bg-(--user-message) text-foreground',
+							)}
+						>
+							<MessageContent content={message.content} />
+						</div>
+
+						<MessageActions content={message.content} />
+					</div>
+				</div>
+			</article>
+		);
+	}
+
 	return (
-		<article className={cn('group w-full', isUser ? 'py-4' : 'py-6')}>
-			<div className="mx-auto flex w-full max-w-4xl gap-4 px-4">
-				<div
-					className={cn(
-						'mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full border',
-						isUser ? 'bg-muted' : 'bg-background',
-					)}
-				>
-					{isUser ? (
-						<User className="size-3.5" />
-					) : (
-						<Bot className="size-3.5" />
-					)}
+		<article className="group w-full py-6">
+			<div className="mx-auto flex w-full max-w-4xl gap-3 px-4">
+				<div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full border bg-background">
+					<Bot className="size-3.5" />
 				</div>
 
 				<div className="min-w-0 flex-1">
 					<div className="mb-1.5 text-sm font-medium text-muted-foreground">
-						{isUser ? 'You' : 'Local AI'}
+						Local AI
 					</div>
 
 					{message.content ? (
@@ -57,6 +70,10 @@ export function MessageItem({ message }: MessageItemProps) {
 						<p className="mt-2 text-xs text-muted-foreground">
 							Generation stopped.
 						</p>
+					)}
+
+					{message.content && !isStreaming && (
+						<MessageActions content={message.content} />
 					)}
 				</div>
 			</div>
