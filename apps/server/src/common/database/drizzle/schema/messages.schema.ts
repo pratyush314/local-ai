@@ -1,4 +1,10 @@
-import { index, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import {
+  index,
+  integer,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from 'drizzle-orm/sqlite-core';
 
 import { CHAT_ROLES, MESSAGE_STATUS } from '@local-ai/constants/chat';
 
@@ -18,6 +24,8 @@ export const messages = sqliteTable(
         onDelete: 'cascade',
         onUpdate: 'cascade',
       }),
+
+    sequence: integer('sequence').notNull(),
 
     role: text('role', {
       enum: [CHAT_ROLES.SYSTEM, CHAT_ROLES.USER, CHAT_ROLES.ASSISTANT],
@@ -42,6 +50,11 @@ export const messages = sqliteTable(
   (table) => [
     index('messages_conversation_id_idx').on(table.conversationId),
 
+    uniqueIndex('messages_conversation_sequence_unique_idx').on(
+      table.conversationId,
+      table.sequence,
+    ),
+
     index('messages_conversation_created_at_idx').on(
       table.conversationId,
       table.createdAt,
@@ -53,3 +66,4 @@ export const messages = sqliteTable(
 
 export type Message = typeof messages.$inferSelect;
 export type NewMessage = typeof messages.$inferInsert;
+export type CreateMessage = Omit<NewMessage, 'sequence'>;

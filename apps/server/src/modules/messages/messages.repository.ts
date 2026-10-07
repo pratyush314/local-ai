@@ -1,21 +1,33 @@
 import { Injectable } from '@nestjs/common';
-import { eq, asc } from 'drizzle-orm';
-
+import { asc, eq, sql } from 'drizzle-orm';
 import { DatabaseService } from '../../common/database/database.service.js';
 import {
+  CreateMessage,
+  Message,
   messages,
-  type Message,
-  type NewMessage,
-} from '../../common/database/drizzle/schema/messages.schema.js';
+} from '../../common/database/drizzle/index.js';
 
 @Injectable()
 export class MessagesRepository {
   constructor(private readonly databaseService: DatabaseService) {}
 
-  async create(data: NewMessage): Promise<Message> {
+  async create(data: CreateMessage): Promise<Message> {
     const [message] = await this.databaseService.db
       .insert(messages)
-      .values(data)
+      .values({
+        ...data,
+
+        sequence: sql<number>`
+          coalesce(
+            (
+              select max(${messages.sequence})
+              from ${messages}
+              where ${messages.conversationId} = ${data.conversationId}
+            ),
+            0
+          ) + 1
+        `,
+      })
       .returning();
 
     return message;
@@ -35,7 +47,7 @@ export class MessagesRepository {
       .select()
       .from(messages)
       .where(eq(messages.conversationId, conversationId))
-      .orderBy(asc(messages.createdAt));
+      .orderBy(asc(messages.sequence));
   }
 
   async update(

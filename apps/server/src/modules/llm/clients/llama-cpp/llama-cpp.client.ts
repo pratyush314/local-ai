@@ -45,7 +45,6 @@ export class LlamaCppClient {
       const data = (await response.json()) as LlamaCppResponse;
 
       const content = data.choices[0]?.message?.content;
-      console.log('DATA :', data.choices[0]);
 
       if (!content) {
         throw new Error('llama.cpp returned an empty response');
