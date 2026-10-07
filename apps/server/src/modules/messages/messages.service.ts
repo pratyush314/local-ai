@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
 import type {
+  CreateMessage,
   Message,
-  NewMessage,
 } from '../../common/database/drizzle/schema/messages.schema.js';
 
 import type { MessageStatus } from '@local-ai/constants/chat';
@@ -13,7 +13,7 @@ import { MessagesRepository } from './messages.repository.js';
 export class MessagesService {
   constructor(private readonly messagesRepository: MessagesRepository) {}
 
-  create(data: NewMessage): Promise<Message> {
+  create(data: CreateMessage): Promise<Message> {
     return this.messagesRepository.create(data);
   }
 
