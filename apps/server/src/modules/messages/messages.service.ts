@@ -76,4 +76,31 @@ export class MessagesService {
 
     await this.messagesRepository.delete(id);
   }
+
+  async deleteFromSequence(
+    conversationId: string,
+    sequence: number,
+  ): Promise<void> {
+    await this.messagesRepository.deleteFromSequence(conversationId, sequence);
+  }
+
+  async editAndDeleteAfter(
+    conversationId: string,
+    messageId: string,
+    sequence: number,
+    content: string,
+  ): Promise<Message> {
+    const message = await this.messagesRepository.editAndDeleteAfter(
+      conversationId,
+      messageId,
+      sequence,
+      content,
+    );
+
+    if (!message) {
+      throw new NotFoundException(`Message with id "${messageId}" not found`);
+    }
+
+    return message;
+  }
 }

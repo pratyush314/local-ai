@@ -6,4 +6,9 @@ export const sendMessageSchema = z.object({
 	content: z.string().trim().min(1).max(CHAT_MESSAGE_LIMITS.MAX_CONTENT_LENGTH),
 });
 
+export const editMessageSchema = z.object({
+	content: z.string().trim().min(1).max(CHAT_MESSAGE_LIMITS.MAX_CONTENT_LENGTH),
+});
+
 export type SendMessageInput = z.infer<typeof sendMessageSchema>;
+export type EditMessageInput = z.infer<typeof editMessageSchema>;

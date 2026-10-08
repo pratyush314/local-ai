@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { asc, eq, sql } from 'drizzle-orm';
+import { and, asc, eq, gt, gte, sql } from 'drizzle-orm';
 import { DatabaseService } from '../../common/database/database.service.js';
 import {
   CreateMessage,
@@ -68,5 +68,58 @@ export class MessagesRepository {
 
   async delete(id: string): Promise<void> {
     await this.databaseService.db.delete(messages).where(eq(messages.id, id));
+  }
+
+  async deleteFromSequence(
+    conversationId: string,
+    sequence: number,
+  ): Promise<void> {
+    await this.databaseService.db
+      .delete(messages)
+      .where(
+        and(
+          eq(messages.conversationId, conversationId),
+          gte(messages.sequence, sequence),
+        ),
+      );
+  }
+
+  async editAndDeleteAfter(
+    conversationId: string,
+    messageId: string,
+    sequence: number,
+    content: string,
+  ): Promise<Message | undefined> {
+    return this.databaseService.db.transaction(async (tx) => {
+      const [message] = await tx
+        .update(messages)
+        .set({
+          content,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(messages.id, messageId),
+            eq(messages.conversationId, conversationId),
+            eq(messages.sequence, sequence),
+          ),
+        )
+        .returning();
+
+      if (!message) {
+        return undefined;
+      }
+
+      await tx
+        .delete(messages)
+        .where(
+          and(
+            eq(messages.conversationId, conversationId),
+            gt(messages.sequence, sequence),
+          ),
+        );
+
+      return message;
+    });
   }
 }

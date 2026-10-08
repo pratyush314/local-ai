@@ -1,4 +1,10 @@
-import { ConflictException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 
 import type {
   ChatStreamEvent,
@@ -17,12 +23,6 @@ import { MessagesService } from '../messages/messages.service.js';
 export class ChatService {
   private readonly logger = new Logger(ChatService.name);
 
-  /**
-   * Tracks conversations that currently have an active generation.
-   *
-   * This is intentionally in-memory because the application currently
-   * runs as a single NestJS process.
-   */
   private readonly activeGenerations = new Set<string>();
 
   constructor(
@@ -31,94 +31,62 @@ export class ChatService {
     private readonly llmService: LlmService,
   ) {}
 
-  /**
-   * Creates a conversation and reserves it for generation.
-   *
-   * The reservation happens before the controller opens the SSE response.
-   */
-  async prepareStartChat(): Promise<{
-    conversationId: string;
-    stream: (
-      input: StartChatInput,
-      signal?: AbortSignal,
-    ) => AsyncIterable<ChatStreamEvent>;
-  }> {
+  async *startChat(
+    input: StartChatInput,
+    signal?: AbortSignal,
+  ): AsyncIterable<ChatStreamEvent> {
     const conversation = await this.conversationsService.createConversation();
 
     this.acquireGeneration(conversation.id);
 
-    return {
-      conversationId: conversation.id,
-      stream: (input, signal) =>
-        this.startChatStream(conversation.id, input, signal),
-    };
+    try {
+      yield {
+        type: 'conversation',
+        conversationId: conversation.id,
+      };
+
+      const userMessage = await this.messagesService.create({
+        id: crypto.randomUUID(),
+        conversationId: conversation.id,
+        role: CHAT_ROLES.USER,
+        content: input.content,
+        status: MESSAGE_STATUS.COMPLETED,
+      });
+
+      await this.conversationsService.touchConversation(conversation.id);
+
+      yield {
+        type: 'message',
+        messageId: userMessage.id,
+        role: CHAT_ROLES.USER,
+      };
+
+      yield* this.generateAssistantResponse(
+        conversation.id,
+        input.content,
+        signal,
+        true,
+      );
+    } finally {
+      this.releaseGeneration(conversation.id);
+    }
   }
 
-  /**
-   * Verifies the conversation and reserves it for generation.
-   *
-   * If another generation is already running, this throws ConflictException
-   * before the SSE response is opened.
-   */
-  async prepareContinueChat(conversationId: string): Promise<{
-    stream: (
-      input: ContinueChatInput,
-      signal?: AbortSignal,
-    ) => AsyncIterable<ChatStreamEvent>;
-  }> {
-    await this.conversationsService.getConversation(conversationId);
-
-    this.acquireGeneration(conversationId);
-
-    return {
-      stream: (input, signal) =>
-        this.continueChatStream(conversationId, input, signal),
-    };
-  }
-
-  private async *startChatStream(
-    conversationId: string,
-    input: StartChatInput,
-    signal?: AbortSignal,
-  ): AsyncIterable<ChatStreamEvent> {
-    yield {
-      type: 'conversation',
-      conversationId,
-    };
-
-    yield* this.sendMessage(conversationId, input.content, {
-      signal,
-      shouldGenerateTitle: true,
-    });
-  }
-
-  private async *continueChatStream(
+  async *continueChat(
     conversationId: string,
     input: ContinueChatInput,
     signal?: AbortSignal,
   ): AsyncIterable<ChatStreamEvent> {
-    yield* this.sendMessage(conversationId, input.content, {
-      signal,
-      shouldGenerateTitle: false,
-    });
-  }
+    await this.conversationsService.getConversation(conversationId);
 
-  private async *sendMessage(
-    conversationId: string,
-    content: string,
-    options?: {
-      signal?: AbortSignal;
-      shouldGenerateTitle?: boolean;
-    },
-  ): AsyncIterable<ChatStreamEvent> {
-    const { signal, shouldGenerateTitle = false } = options ?? {};
+    this.acquireGeneration(conversationId);
 
     try {
       const userMessage = await this.messagesService.create({
         id: crypto.randomUUID(),
         conversationId,
         role: CHAT_ROLES.USER,
-        content,
+        content: input.content,
         status: MESSAGE_STATUS.COMPLETED,
       });
 
@@ -130,139 +98,279 @@ export class ChatService {
         role: CHAT_ROLES.USER,
       };
 
-      const assistantMessage = await this.messagesService.create({
-        id: crypto.randomUUID(),
+      yield* this.generateAssistantResponse(
         conversationId,
-        role: CHAT_ROLES.ASSISTANT,
-        content: '',
-        status: MESSAGE_STATUS.PENDING,
-      });
+        input.content,
+        signal,
+        false,
+      );
+    } finally {
+      this.releaseGeneration(conversationId);
+    }
+  }
+
+  async *regenerateMessage(
+    conversationId: string,
+    messageId: string,
+    signal?: AbortSignal,
+  ): AsyncIterable<ChatStreamEvent> {
+    await this.conversationsService.getConversation(conversationId);
+
+    this.acquireGeneration(conversationId);
+
+    try {
+      const target = await this.messagesService.findById(messageId);
+
+      this.assertMessageBelongsToConversation(target, conversationId);
+
+      if (target.role !== CHAT_ROLES.ASSISTANT) {
+        throw new BadRequestException(
+          'Only assistant messages can be regenerated',
+        );
+      }
+
+      const messages =
+        await this.messagesService.findByConversationId(conversationId);
+
+      const targetIndex = messages.findIndex(
+        (message) => message.id === target.id,
+      );
+
+      if (targetIndex <= 0) {
+        throw new BadRequestException(
+          'Cannot regenerate this assistant message because its preceding user message was not found',
+        );
+      }
+
+      const precedingUserMessage = messages[targetIndex - 1];
+
+      if (precedingUserMessage.role !== CHAT_ROLES.USER) {
+        throw new BadRequestException(
+          'Assistant message must immediately follow a user message',
+        );
+      }
+
+      await this.messagesService.deleteFromSequence(
+        conversationId,
+        target.sequence,
+      );
+
+      await this.conversationsService.touchConversation(conversationId);
+
+      yield* this.generateAssistantResponse(
+        conversationId,
+        precedingUserMessage.content,
+        signal,
+        false,
+      );
+    } finally {
+      this.releaseGeneration(conversationId);
+    }
+  }
+
+  async *editMessage(
+    conversationId: string,
+    messageId: string,
+    content: string,
+    signal?: AbortSignal,
+  ): AsyncIterable<ChatStreamEvent> {
+    await this.conversationsService.getConversation(conversationId);
+
+    this.acquireGeneration(conversationId);
+
+    try {
+      const target = await this.messagesService.findById(messageId);
+
+      this.assertMessageBelongsToConversation(target, conversationId);
+
+      if (target.role !== CHAT_ROLES.USER) {
+        throw new BadRequestException('Only user messages can be edited');
+      }
+
+      const normalizedContent = content.trim();
+
+      if (!normalizedContent) {
+        throw new BadRequestException('Message content cannot be empty');
+      }
+
+      const updatedMessage = await this.messagesService.editAndDeleteAfter(
+        conversationId,
+        target.id,
+        target.sequence,
+        normalizedContent,
+      );
+
+      await this.conversationsService.touchConversation(conversationId);
 
       yield {
         type: 'message',
-        messageId: assistantMessage.id,
-        role: CHAT_ROLES.ASSISTANT,
+        messageId: updatedMessage.id,
+        role: CHAT_ROLES.USER,
       };
 
-      await this.messagesService.updateStatus(
-        assistantMessage.id,
-        MESSAGE_STATUS.STREAMING,
+      yield* this.generateAssistantResponse(
+        conversationId,
+        normalizedContent,
+        signal,
+        false,
       );
+    } finally {
+      this.releaseGeneration(conversationId);
+    }
+  }
 
-      let generatedContent = '';
+  private async *generateAssistantResponse(
+    conversationId: string,
+    userContent: string,
+    signal?: AbortSignal,
+    shouldGenerateTitle = false,
+  ): AsyncIterable<ChatStreamEvent> {
+    const assistantMessage = await this.messagesService.create({
+      id: crypto.randomUUID(),
+      conversationId,
+      role: CHAT_ROLES.ASSISTANT,
+      content: '',
+      status: MESSAGE_STATUS.PENDING,
+    });
 
-      try {
-        const messages = await this.buildLlmMessages(conversationId);
+    yield {
+      type: 'message',
+      messageId: assistantMessage.id,
+      role: CHAT_ROLES.ASSISTANT,
+    };
 
-        for await (const event of this.llmService.stream({
-          messages,
-          signal,
-        })) {
-          if (event.type === 'token') {
-            generatedContent += event.content;
+    await this.messagesService.updateStatus(
+      assistantMessage.id,
+      MESSAGE_STATUS.STREAMING,
+    );
 
-            yield {
-              type: 'token',
-              content: event.content,
-            };
+    let generatedContent = '';
 
-            continue;
-          }
+    try {
+      const messages = await this.buildLlmMessages(conversationId);
 
-          if (event.type === 'error') {
-            throw new Error(event.message);
-          }
+      for await (const event of this.llmService.stream({
+        messages,
+        signal,
+      })) {
+        if (event.type === 'token') {
+          generatedContent += event.content;
 
-          if (event.type === 'done') {
-            break;
-          }
+          yield {
+            type: 'token',
+            content: event.content,
+          };
+
+          continue;
         }
 
+        if (event.type === 'error') {
+          throw new Error(event.message);
+        }
+
+        if (event.type === 'done') {
+          break;
+        }
+      }
+
+      await this.messagesService.update(assistantMessage.id, {
+        content: generatedContent,
+        status: MESSAGE_STATUS.COMPLETED,
+      });
+
+      await this.conversationsService.touchConversation(conversationId);
+
+      yield {
+        type: 'done',
+        messageId: assistantMessage.id,
+      };
+
+      if (shouldGenerateTitle && !signal?.aborted) {
+        const title = await this.generateConversationTitle(
+          conversationId,
+          userContent,
+          signal,
+        );
+
+        if (title) {
+          yield {
+            type: 'conversation_updated',
+            conversationId,
+            title,
+          };
+        }
+      }
+    } catch (error) {
+      if (signal?.aborted) {
         await this.messagesService.update(assistantMessage.id, {
           content: generatedContent,
-          status: MESSAGE_STATUS.COMPLETED,
+          status: MESSAGE_STATUS.CANCELLED,
         });
 
-        await this.conversationsService.touchConversation(conversationId);
-
         yield {
-          type: 'done',
+          type: 'cancelled',
           messageId: assistantMessage.id,
         };
 
-        /**
-         * Title generation is post-processing.
-         *
-         * It must never turn an already completed assistant message
-         * into a failed message.
-         */
-        if (shouldGenerateTitle && !signal?.aborted) {
-          try {
-            const title = await this.llmService.generateTitle(content, signal);
-
-            if (title) {
-              await this.conversationsService.updateConversationTitle(
-                conversationId,
-                title,
-              );
-
-              yield {
-                type: 'conversation_updated',
-                conversationId,
-                title,
-              };
-            }
-          } catch (error) {
-            if (signal?.aborted) {
-              this.logger.debug(
-                `Title generation aborted for conversation ${conversationId}`,
-              );
-            } else {
-              this.logger.warn(
-                `Title generation failed for conversation ${conversationId}: ${
-                  error instanceof Error ? error.message : 'Unknown error'
-                }`,
-              );
-            }
-          }
-        }
-      } catch (error) {
-        if (signal?.aborted) {
-          await this.messagesService.update(assistantMessage.id, {
-            content: generatedContent,
-            status: MESSAGE_STATUS.CANCELLED,
-          });
-
-          yield {
-            type: 'cancelled',
-            messageId: assistantMessage.id,
-          };
-
-          return;
-        }
-
-        await this.messagesService.update(assistantMessage.id, {
-          content: generatedContent,
-          status: MESSAGE_STATUS.FAILED,
-        });
-
-        yield {
-          type: 'error',
-          message:
-            error instanceof Error ? error.message : 'Chat generation failed',
-        };
+        return;
       }
-    } finally {
-      /**
-       * The reservation is released regardless of:
-       *
-       * - successful generation
-       * - LLM failure
-       * - cancellation
-       * - database failure
-       * - client disconnect
-       */
-      this.releaseGeneration(conversationId);
+
+      await this.messagesService.update(assistantMessage.id, {
+        content: generatedContent,
+        status: MESSAGE_STATUS.FAILED,
+      });
+
+      yield {
+        type: 'error',
+        message:
+          error instanceof Error ? error.message : 'Chat generation failed',
+      };
+    }
+  }
+
+  private async generateConversationTitle(
+    conversationId: string,
+    content: string,
+    signal?: AbortSignal,
+  ): Promise<string | undefined> {
+    try {
+      const title = await this.llmService.generateTitle(content, signal);
+
+      if (!title) {
+        return undefined;
+      }
+
+      await this.conversationsService.updateConversationTitle(
+        conversationId,
+        title,
+      );
+
+      return title;
+    } catch (error) {
+      if (signal?.aborted) {
+        this.logger.debug(
+          `Title generation aborted for conversation ${conversationId}`,
+        );
+
+        return undefined;
+      }
+
+      this.logger.warn(
+        `Title generation failed for conversation ${conversationId}: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
+      );
+
+      return undefined;
+    }
+  }
+
+  private assertMessageBelongsToConversation(
+    message: Awaited<ReturnType<MessagesService['findById']>>,
+    conversationId: string,
+  ): void {
+    if (message.conversationId !== conversationId) {
+      throw new NotFoundException('Message not found in this conversation');
     }
   }
 
