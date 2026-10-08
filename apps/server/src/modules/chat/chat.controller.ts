@@ -2,14 +2,21 @@ import { Body, Controller, Param, Post, Res } from '@nestjs/common';
 
 import {
   continueChatSchema,
+  editMessageSchema,
   startChatSchema,
   type ContinueChatInput,
+  type EditMessageInput,
   type StartChatInput,
 } from '@local-ai/contracts/chat';
 
 import type { Response } from 'express';
 
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
+
+import {
+  canWrite,
+  setupSseResponse,
+} from '../../common/lib/streams/stream.lib.js';
 
 import { ChatService } from './chat.service.js';
 
@@ -23,14 +30,6 @@ export class ChatController {
     input: StartChatInput,
     @Res() response: Response,
   ): Promise<void> {
-    /**
-     * Reserve the generation BEFORE opening SSE.
-     *
-     * For a new conversation this cannot conflict because the
-     * conversation is created here.
-     */
-    const prepared = await this.chatService.prepareStartChat();
-
     const abortController = new AbortController();
 
     const abortGeneration = () => {
@@ -47,14 +46,14 @@ export class ChatController {
 
     response.on('close', handleResponseClose);
 
-    this.setupSseResponse(response);
+    setupSseResponse(response);
 
     try {
-      for await (const event of prepared.stream(
+      for await (const event of this.chatService.startChat(
         input,
         abortController.signal,
       )) {
-        if (!this.canWrite(response)) {
+        if (!canWrite(response)) {
           break;
         }
 
@@ -71,20 +70,14 @@ export class ChatController {
 
   @Post(':conversationId/messages')
   async continueChat(
-    @Param('conversationId') conversationId: string,
+    @Param('conversationId')
+    conversationId: string,
+
     @Body(new ZodValidationPipe(continueChatSchema))
     input: ContinueChatInput,
+
     @Res() response: Response,
   ): Promise<void> {
-    /**
-     * IMPORTANT:
-     *
-     * This happens BEFORE setupSseResponse().
-     *
-     * Therefore ConflictException can still become a normal HTTP 409.
-     */
-    const prepared = await this.chatService.prepareContinueChat(conversationId);
-
     const abortController = new AbortController();
 
     const abortGeneration = () => {
@@ -101,14 +94,15 @@ export class ChatController {
 
     response.on('close', handleResponseClose);
 
-    this.setupSseResponse(response);
+    setupSseResponse(response);
 
     try {
-      for await (const event of prepared.stream(
+      for await (const event of this.chatService.continueChat(
+        conversationId,
         input,
         abortController.signal,
       )) {
-        if (!this.canWrite(response)) {
+        if (!canWrite(response)) {
           break;
         }
 
@@ -123,17 +117,105 @@ export class ChatController {
     }
   }
 
-  private setupSseResponse(response: Response): void {
-    response.setHeader('Content-Type', 'text/event-stream');
+  @Post(':conversationId/messages/:messageId/regenerate')
+  async regenerateMessage(
+    @Param('conversationId')
+    conversationId: string,
 
-    response.setHeader('Cache-Control', 'no-cache');
+    @Param('messageId')
+    messageId: string,
 
-    response.setHeader('Connection', 'keep-alive');
+    @Res() response: Response,
+  ): Promise<void> {
+    const abortController = new AbortController();
 
-    response.flushHeaders();
+    const abortGeneration = () => {
+      if (!abortController.signal.aborted) {
+        abortController.abort();
+      }
+    };
+
+    const handleResponseClose = () => {
+      if (!response.writableEnded) {
+        abortGeneration();
+      }
+    };
+
+    response.on('close', handleResponseClose);
+
+    setupSseResponse(response);
+
+    try {
+      for await (const event of this.chatService.regenerateMessage(
+        conversationId,
+        messageId,
+        abortController.signal,
+      )) {
+        if (!canWrite(response)) {
+          break;
+        }
+
+        response.write(`data: ${JSON.stringify(event)}\n\n`);
+      }
+    } finally {
+      response.off('close', handleResponseClose);
+
+      if (!response.writableEnded && !response.destroyed) {
+        response.end();
+      }
+    }
   }
 
-  private canWrite(response: Response): boolean {
-    return !response.writableEnded && !response.destroyed;
+  @Post(':conversationId/messages/:messageId/edit')
+  async editMessage(
+    @Param('conversationId')
+    conversationId: string,
+
+    @Param('messageId')
+    messageId: string,
+
+    @Body(new ZodValidationPipe(editMessageSchema))
+    input: EditMessageInput,
+
+    @Res() response: Response,
+  ): Promise<void> {
+    const abortController = new AbortController();
+
+    const abortGeneration = () => {
+      if (!abortController.signal.aborted) {
+        abortController.abort();
+      }
+    };
+
+    const handleResponseClose = () => {
+      if (!response.writableEnded) {
+        abortGeneration();
+      }
+    };
+
+    response.on('close', handleResponseClose);
+
+    setupSseResponse(response);
+
+    try {
+      for await (const event of this.chatService.editMessage(
+        conversationId,
+        messageId,
+        input.content,
+        abortController.signal,
+      )) {
+        if (!canWrite(response)) {
+          break;
+        }
+
+        response.write(`data: ${JSON.stringify(event)}\n\n`);
+      }
+    } finally {
+      response.off('close', handleResponseClose);
+
+      if (!response.writableEnded && !response.destroyed) {
+        response.end();
+      }
+    }
   }
 }
