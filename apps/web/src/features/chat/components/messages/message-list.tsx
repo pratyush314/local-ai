@@ -5,26 +5,26 @@ import { ArrowDown } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 
+import type { ChatMessage } from '../../types/chat.types';
 import { MessageItem } from './message-item';
-import { ChatMessage } from '../../types/chat.types';
 
 interface MessageListProps {
 	messages: ChatMessage[];
+	isGenerating: boolean;
+	onEditMessage: (messageId: string, content: string) => void | Promise<void>;
+	onRegenerateMessage: (messageId: string) => void | Promise<void>;
 }
 
 const BOTTOM_THRESHOLD = 80;
 
-export function MessageList({ messages }: MessageListProps) {
+export function MessageList({
+	messages,
+	isGenerating,
+	onEditMessage,
+	onRegenerateMessage,
+}: MessageListProps) {
 	const scrollContainerRef = useRef<HTMLDivElement>(null);
 	const bottomRef = useRef<HTMLDivElement>(null);
-
-	/**
-	 * Whether streaming should keep the viewport pinned to the bottom.
-	 *
-	 * This is intentionally a ref rather than state.
-	 * Streaming can update messages many times per second, so this
-	 * should not participate in the React render cycle.
-	 */
 	const shouldFollowRef = useRef(true);
 
 	const [showJumpToLatest, setShowJumpToLatest] = useState(false);
@@ -32,9 +32,7 @@ export function MessageList({ messages }: MessageListProps) {
 	const isAtBottom = useCallback(() => {
 		const container = scrollContainerRef.current;
 
-		if (!container) {
-			return true;
-		}
+		if (!container) return true;
 
 		const distanceFromBottom =
 			container.scrollHeight - container.scrollTop - container.clientHeight;
@@ -46,10 +44,8 @@ export function MessageList({ messages }: MessageListProps) {
 		const atBottom = isAtBottom();
 
 		shouldFollowRef.current = atBottom;
-
 		setShowJumpToLatest((current) => {
 			const next = !atBottom;
-
 			return current === next ? current : next;
 		});
 	}, [isAtBottom]);
@@ -64,36 +60,20 @@ export function MessageList({ messages }: MessageListProps) {
 		setShowJumpToLatest(false);
 	}, []);
 
-	/**
-	 * Listen for user scrolling.
-	 */
 	useEffect(() => {
 		const container = scrollContainerRef.current;
 
-		if (!container) {
-			return;
-		}
+		if (!container) return;
 
-		container.addEventListener('scroll', handleScroll, {
-			passive: true,
-		});
+		container.addEventListener('scroll', handleScroll, { passive: true });
 
 		return () => {
 			container.removeEventListener('scroll', handleScroll);
 		};
-	}, []);
+	}, [handleScroll]);
 
-	/**
-	 * Follow new content only when the user has not scrolled away
-	 * from the bottom.
-	 *
-	 * `shouldFollowRef` is deliberately used instead of state so
-	 * streaming tokens don't create a render/effect feedback loop.
-	 */
 	useEffect(() => {
-		if (!shouldFollowRef.current) {
-			return;
-		}
+		if (!shouldFollowRef.current) return;
 
 		bottomRef.current?.scrollIntoView({
 			behavior: 'auto',
@@ -101,9 +81,7 @@ export function MessageList({ messages }: MessageListProps) {
 		});
 	}, [messages]);
 
-	if (messages.length === 0) {
-		return null;
-	}
+	if (messages.length === 0) return null;
 
 	return (
 		<div
@@ -112,7 +90,13 @@ export function MessageList({ messages }: MessageListProps) {
 		>
 			<div className="pb-8 pt-4">
 				{messages.map((message) => (
-					<MessageItem key={message.id} message={message} />
+					<MessageItem
+						key={message.id}
+						message={message}
+						isGenerating={isGenerating}
+						onEditMessage={onEditMessage}
+						onRegenerateMessage={onRegenerateMessage}
+					/>
 				))}
 
 				<div ref={bottomRef} />

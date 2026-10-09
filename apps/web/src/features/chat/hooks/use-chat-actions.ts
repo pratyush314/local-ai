@@ -130,8 +130,10 @@ export function useChatActions({
 				return;
 			}
 
+			// Update the displayed message immediately.
 			stateActions.editMessageLocally(messageId, normalizedContent);
 
+			// Keep the global generation state active while the AI responds.
 			stateActions.setGenerating(true);
 
 			try {
@@ -139,7 +141,13 @@ export function useChatActions({
 					content: normalizedContent,
 				});
 
-				await streamActions.startStream(stream, state.conversationId);
+				// Start consuming the stream in the background.
+				// Do not wait here for the assistant response to finish.
+				void streamActions
+					.startStream(stream, state.conversationId)
+					.catch(() => {
+						stateActions.setGenerating(false);
+					});
 			} catch {
 				stateActions.setGenerating(false);
 			}

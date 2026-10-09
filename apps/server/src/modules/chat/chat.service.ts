@@ -193,7 +193,7 @@ export class ChatService {
         throw new BadRequestException('Message content cannot be empty');
       }
 
-      const updatedMessage = await this.messagesService.editAndDeleteAfter(
+      const updatedMessage = this.messagesService.editAndDeleteAfter(
         conversationId,
         target.id,
         target.sequence,
