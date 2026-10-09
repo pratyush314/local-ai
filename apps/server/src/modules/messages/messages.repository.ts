@@ -84,14 +84,14 @@ export class MessagesRepository {
       );
   }
 
-  async editAndDeleteAfter(
+  editAndDeleteAfter(
     conversationId: string,
     messageId: string,
     sequence: number,
     content: string,
-  ): Promise<Message | undefined> {
-    return this.databaseService.db.transaction(async (tx) => {
-      const [message] = await tx
+  ): Message | undefined {
+    return this.databaseService.db.transaction((tx) => {
+      const [message] = tx
         .update(messages)
         .set({
           content,
@@ -104,20 +104,21 @@ export class MessagesRepository {
             eq(messages.sequence, sequence),
           ),
         )
-        .returning();
+        .returning()
+        .all();
 
       if (!message) {
         return undefined;
       }
 
-      await tx
-        .delete(messages)
+      tx.delete(messages)
         .where(
           and(
             eq(messages.conversationId, conversationId),
             gt(messages.sequence, sequence),
           ),
-        );
+        )
+        .run();
 
       return message;
     });

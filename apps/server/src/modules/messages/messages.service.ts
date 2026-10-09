@@ -84,13 +84,13 @@ export class MessagesService {
     await this.messagesRepository.deleteFromSequence(conversationId, sequence);
   }
 
-  async editAndDeleteAfter(
+  editAndDeleteAfter(
     conversationId: string,
     messageId: string,
     sequence: number,
     content: string,
-  ): Promise<Message> {
-    const message = await this.messagesRepository.editAndDeleteAfter(
+  ): Message {
+    const message = this.messagesRepository.editAndDeleteAfter(
       conversationId,
       messageId,
       sequence,

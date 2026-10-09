@@ -26,6 +26,8 @@ export function ChatPage() {
 		clearLoadError,
 		sendMessage,
 		stopGeneration,
+		editMessage,
+		regenerateMessage,
 	} = useChat({
 		conversationId: activeConversationId,
 		onConversationChange: selectConversation,
@@ -64,7 +66,12 @@ export function ChatPage() {
 						</div>
 					</div>
 				) : (
-					<MessageList messages={messages} />
+					<MessageList
+						isGenerating={isGenerating}
+						messages={messages}
+						onEditMessage={editMessage}
+						onRegenerateMessage={regenerateMessage}
+					/>
 				)}
 
 				{loadError && (
