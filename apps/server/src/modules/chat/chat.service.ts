@@ -259,6 +259,7 @@ export class ChatService {
           yield {
             type: 'token',
             content: event.content,
+            messageId: assistantMessage.id,
           };
 
           continue;

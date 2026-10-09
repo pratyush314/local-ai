@@ -21,6 +21,7 @@ export const chatStreamEventSchema = z.discriminatedUnion('type', [
 	z.object({
 		type: z.literal('token'),
 		content: z.string(),
+		messageId: z.string().uuid(),
 	}),
 
 	z.object({

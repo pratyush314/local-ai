@@ -5,8 +5,8 @@ import { useCallback } from 'react';
 import { useAppShell } from '@/components/layout/app-shell-context';
 import { MobileSidebar } from '@/components/layout/mobile-sidebar';
 
+import { useChat } from '../../hooks/use-chat';
 import { ChatInput } from './chat-input';
-import { useChatStream } from '../../hooks/use-chat-stream';
 import { MessageList } from '../messages/message-list';
 
 export function ChatPage() {
@@ -23,9 +23,10 @@ export function ChatPage() {
 		isGenerating,
 		isLoadingConversation,
 		loadError,
+		clearLoadError,
 		sendMessage,
 		stopGeneration,
-	} = useChatStream({
+	} = useChat({
 		conversationId: activeConversationId,
 		onConversationChange: selectConversation,
 		onConversationUpdated: handleConversationUpdated,
@@ -67,9 +68,20 @@ export function ChatPage() {
 				)}
 
 				{loadError && (
-					<p className="px-4 py-2 text-center text-sm text-destructive">
-						{loadError}
-					</p>
+					<div
+						role="alert"
+						className="flex items-center justify-center gap-3 px-4 py-2 text-center text-sm text-destructive"
+					>
+						<p>{loadError.message}</p>
+
+						<button
+							type="button"
+							className="shrink-0 underline underline-offset-4"
+							onClick={clearLoadError}
+						>
+							Dismiss
+						</button>
+					</div>
 				)}
 
 				<ChatInput

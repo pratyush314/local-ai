@@ -10,5 +10,9 @@ export const API_ENDPOINTS = {
 	CHAT: {
 		START: '/chat',
 		CONTINUE: (conversationId: string) => `/chat/${conversationId}/messages`,
+		REGENERATE: (conversationId: string, messageId: string) =>
+			`/chat/${conversationId}/messages/${messageId}/regenerate`,
+		EDIT: (conversationId: string, messageId: string) =>
+			`/chat/${conversationId}/messages/${messageId}/edit`,
 	},
 } as const;
