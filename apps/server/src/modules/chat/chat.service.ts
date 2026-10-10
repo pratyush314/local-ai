@@ -157,11 +157,13 @@ export class ChatService {
 
       await this.conversationsService.touchConversation(conversationId);
 
+      const isFirstMessage = target.sequence === 1;
+
       yield* this.generateAssistantResponse(
         conversationId,
         precedingUserMessage.content,
         signal,
-        false,
+        isFirstMessage,
       );
     } finally {
       this.releaseGeneration(conversationId);
@@ -208,11 +210,13 @@ export class ChatService {
         role: CHAT_ROLES.USER,
       };
 
+      const isFirstMessage = target.sequence === 1;
+
       yield* this.generateAssistantResponse(
         conversationId,
         normalizedContent,
         signal,
-        false,
+        isFirstMessage,
       );
     } finally {
       this.releaseGeneration(conversationId);
