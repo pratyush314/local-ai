@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 import type { Conversation } from '../types/conversation.types';
+import Link from 'next/link';
 
 interface ConversationItemProps {
 	conversation: Conversation;
@@ -65,15 +66,15 @@ export function ConversationItem({
 					active && 'bg-sidebar-accent text-sidebar-accent-foreground',
 				)}
 			>
-				<button
-					type="button"
+				<Link
+					href={`/chat/${encodeURIComponent(conversation.id)}`}
 					onClick={onClick}
 					className="flex min-w-0 flex-1 items-center gap-2 px-1.5 py-2 text-left"
 				>
 					<MessageSquare className="size-4 shrink-0 text-muted-foreground" />
 
 					<span className="min-w-0 flex-1 truncate">{conversation.title}</span>
-				</button>
+				</Link>
 
 				{onDelete && (
 					<DropdownMenu>

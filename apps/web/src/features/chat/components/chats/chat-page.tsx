@@ -1,17 +1,19 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 
 import { useAppShell } from '@/components/layout/app-shell-context';
 import { MobileSidebar } from '@/components/layout/mobile-sidebar';
 
 import { useChat } from '../../hooks/use-chat';
-import { ChatInput } from './chat-input';
+import { useChatRouting } from '../../hooks/use-chat-routing';
 import { MessageList } from '../messages/message-list';
+import { ChatInput } from './chat-input';
 
 export function ChatPage() {
-	const { activeConversationId, selectConversation, markConversationsChanged } =
-		useAppShell();
+	const { conversationId, handleConversationChange } = useChatRouting();
+
+	const { markConversationsChanged } = useAppShell();
 
 	const handleConversationUpdated = useCallback(() => {
 		markConversationsChanged();
@@ -29,10 +31,16 @@ export function ChatPage() {
 		editMessage,
 		regenerateMessage,
 	} = useChat({
-		conversationId: activeConversationId,
-		onConversationChange: selectConversation,
+		conversationId,
+		onConversationChange: handleConversationChange,
 		onConversationUpdated: handleConversationUpdated,
 	});
+
+	useEffect(() => {
+		const pageTitle = title.trim() || 'Local AI';
+
+		document.title = `${pageTitle} | Local AI`;
+	}, [title]);
 
 	return (
 		<div className="flex h-full min-h-0 flex-col">

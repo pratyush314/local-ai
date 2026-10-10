@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { RefObject, useCallback, useEffect, useRef, useState } from 'react';
 
 import {
 	getConversation,
@@ -11,6 +11,7 @@ import type { ChatState } from '../types/chat.types';
 
 interface UseChatConversationOptions {
 	conversationId: string | null;
+	skipNextLoadRef: RefObject<string | null>;
 
 	setConversationData: (
 		conversationId: string,
@@ -34,6 +35,7 @@ export function useChatConversation({
 	setConversation,
 	reset,
 	abortGeneration,
+	skipNextLoadRef,
 }: UseChatConversationOptions) {
 	const [loadError, setLoadError] = useState<ConversationLoadError | null>(
 		null,
@@ -42,12 +44,6 @@ export function useChatConversation({
 	const [isLoadingConversation, setIsLoadingConversation] = useState(false);
 
 	const loadedConversationIdRef = useRef<string | null>(null);
-
-	const skipNextLoadRef = useRef<string | null>(null);
-
-	const skipNextLoad = useCallback((nextConversationId: string) => {
-		skipNextLoadRef.current = nextConversationId;
-	}, []);
 
 	useEffect(() => {
 		const runIfConversationIdIsNull = () => {
@@ -140,6 +136,7 @@ export function useChatConversation({
 		setConversation,
 		reset,
 		abortGeneration,
+		skipNextLoadRef,
 	]);
 
 	const clearLoadError = useCallback(() => {
@@ -150,6 +147,5 @@ export function useChatConversation({
 		isLoadingConversation,
 		loadError,
 		clearLoadError,
-		skipNextLoad,
 	};
 }

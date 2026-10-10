@@ -1,10 +1,5 @@
-import { AppShell } from '@/components/layout/app-shell';
-import { ChatPage } from '@/features/chat/components/chats/chat-page';
+import { redirect } from 'next/navigation';
 
 export default function Home() {
-	return (
-		<AppShell>
-			<ChatPage />
-		</AppShell>
-	);
+	redirect('/chat');
 }
