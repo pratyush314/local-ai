@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import type { ChatStreamProcessorHandlers } from '../lib/chat-stream';
 
@@ -27,12 +27,10 @@ export function useChat({
 		message: string;
 	} | null>(null);
 
-	const skipNextLoadRef = useRef<((conversationId: string) => void) | null>(
-		null,
-	);
+	const skipNextLoadRef = useRef<string | null>(null);
 
-	const setSkipNextLoad = useCallback((nextConversationId: string) => {
-		skipNextLoadRef.current?.(nextConversationId);
+	const setSkipNextLoad = useCallback((conversationId: string) => {
+		skipNextLoadRef.current = conversationId;
 	}, []);
 
 	const streamHandlers = useMemo<ChatStreamProcessorHandlers>(
@@ -79,11 +77,8 @@ export function useChat({
 		setConversation: chatState.setConversation,
 		reset: chatState.reset,
 		abortGeneration: chatStream.abortGeneration,
+		skipNextLoadRef,
 	});
-
-	useEffect(() => {
-		skipNextLoadRef.current = conversation.skipNextLoad;
-	}, [conversation.skipNextLoad]);
 
 	const stateActions = useMemo(
 		() => ({
