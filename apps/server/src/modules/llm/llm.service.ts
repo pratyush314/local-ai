@@ -4,6 +4,7 @@ import type { LlmProvider } from './interfaces/llm-provider.interface.js';
 import type { LlmGenerationOptions } from './types/llm-generation.type.js';
 import type { LlmStreamEvent } from './types/llm-stream.type.js';
 import { LLM_TITLE_GENERATION } from './constants/llm.constants.js';
+import { LlmMessage } from './types/llm-message.type.js';
 
 export const LLM_PROVIDER = Symbol('LLM_PROVIDER');
 
@@ -20,6 +21,13 @@ export class LlmService {
 
   stream(options: LlmGenerationOptions): AsyncIterable<LlmStreamEvent> {
     return this.provider.stream(options);
+  }
+
+  countPromptTokens(
+    messages: LlmMessage[],
+    signal?: AbortSignal,
+  ): Promise<number> {
+    return this.provider.countPromptTokens(messages, signal);
   }
 
   generateTitle(content: string, signal?: AbortSignal): Promise<string> {

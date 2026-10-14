@@ -18,6 +18,7 @@ import { ConversationsService } from '../conversations/conversations.service.js'
 import { LlmService } from '../llm/llm.service.js';
 import type { LlmMessage } from '../llm/types/llm-message.type.js';
 import { MessagesService } from '../messages/messages.service.js';
+import { ContextService } from '../context/context.service.js';
 
 @Injectable()
 export class ChatService {
@@ -29,6 +30,7 @@ export class ChatService {
     private readonly conversationsService: ConversationsService,
     private readonly messagesService: MessagesService,
     private readonly llmService: LlmService,
+    private readonly contextService: ContextService,
   ) {}
 
   async *startChat(
@@ -253,8 +255,11 @@ export class ChatService {
     try {
       const messages = await this.buildLlmMessages(conversationId);
 
+      const context = await this.contextService.prepare(messages, signal);
+
       for await (const event of this.llmService.stream({
-        messages,
+        messages: context.messages,
+        maxTokens: context.maxTokens,
         signal,
       })) {
         if (event.type === 'token') {

@@ -6,12 +6,16 @@ import { AI_DEFAULTS } from '@local-ai/constants/ai';
 import type { LlmGenerationOptions } from '../../types/llm-generation.type.js';
 import type { LlmStreamEvent } from '../../types/llm-stream.type.js';
 import {
+  LlamaCppApplyTemplateResponse,
   LlamaCppResponse,
   LlamaCppStreamResponse,
+  LlamaCppTokenizeResponse,
 } from './llama-cpp.interface.js';
+import { LlmMessage } from '../../types/llm-message.type.js';
+import { LlmProvider } from '../../interfaces/llm-provider.interface.js';
 
 @Injectable()
-export class LlamaCppClient {
+export class LlamaCppClient implements LlmProvider {
   constructor(private readonly configService: AppConfigService) {}
 
   async generate(options: LlmGenerationOptions): Promise<string> {
@@ -171,5 +175,64 @@ export class LlamaCppClient {
 
       throw error;
     }
+  }
+
+  async countPromptTokens(
+    messages: LlmMessage[],
+    signal?: AbortSignal,
+  ): Promise<number> {
+    const baseUrl = this.configService
+      .getOrThrow('LLAMA_CPP_BASE_URL')
+      .replace(/\/+$/, '');
+
+    const templateResponse = await fetch(`${baseUrl}/apply-template`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages }),
+      signal,
+    });
+
+    if (!templateResponse.ok) {
+      const errorBody = await templateResponse.text();
+
+      throw new Error(
+        `llama.cpp template request failed (${templateResponse.status}): ${errorBody}`,
+      );
+    }
+
+    const templateData =
+      (await templateResponse.json()) as LlamaCppApplyTemplateResponse;
+
+    if (typeof templateData.prompt !== 'string') {
+      throw new Error('llama.cpp returned an invalid formatted prompt');
+    }
+
+    const tokenizeResponse = await fetch(`${baseUrl}/tokenize`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        content: templateData.prompt,
+        add_special: false,
+        parse_special: true,
+      }),
+      signal,
+    });
+
+    if (!tokenizeResponse.ok) {
+      const errorBody = await tokenizeResponse.text();
+
+      throw new Error(
+        `llama.cpp tokenization request failed (${tokenizeResponse.status}): ${errorBody}`,
+      );
+    }
+
+    const tokenizeData =
+      (await tokenizeResponse.json()) as LlamaCppTokenizeResponse;
+
+    if (!Array.isArray(tokenizeData.tokens)) {
+      throw new Error('llama.cpp returned an invalid tokenization response');
+    }
+
+    return tokenizeData.tokens.length;
   }
 }
