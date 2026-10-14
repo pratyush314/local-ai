@@ -15,3 +15,11 @@ export interface LlamaCppStreamResponse {
     finish_reason?: string | null;
   }>;
 }
+
+export interface LlamaCppApplyTemplateResponse {
+  prompt: string;
+}
+
+export interface LlamaCppTokenizeResponse {
+  tokens: number[];
+}

@@ -32,6 +32,12 @@ export const envValidationSchema = z.object({
   STORAGE_PATH: z.string().min(1, 'STORAGE_PATH is required'),
 
   MAX_FILE_SIZE_MB: positiveIntFromEnvSchema.default(100),
+
+  LLAMA_CONTEXT_SIZE: positiveIntFromEnvSchema.default(8192),
+
+  CHAT_MAX_OUTPUT_TOKENS: positiveIntFromEnvSchema.default(1024),
+
+  CHAT_CONTEXT_SAFETY_TOKENS: z.coerce.number().int().min(0).default(512),
 });
 
 export type EnvConfig = z.infer<typeof envValidationSchema>;

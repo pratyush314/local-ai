@@ -4,6 +4,7 @@ import { LlamaCppClient } from '../../clients/llama-cpp/llama-cpp.client.js';
 import type { LlmProvider } from '../../interfaces/llm-provider.interface.js';
 import type { LlmGenerationOptions } from '../../types/llm-generation.type.js';
 import type { LlmStreamEvent } from '../../types/llm-stream.type.js';
+import { LlmMessage } from '../../types/llm-message.type.js';
 
 @Injectable()
 export class LlamaCppProvider implements LlmProvider {
@@ -15,5 +16,12 @@ export class LlamaCppProvider implements LlmProvider {
 
   stream(options: LlmGenerationOptions): AsyncIterable<LlmStreamEvent> {
     return this.client.stream(options);
+  }
+
+  countPromptTokens(
+    messages: LlmMessage[],
+    signal?: AbortSignal,
+  ): Promise<number> {
+    return this.client.countPromptTokens(messages, signal);
   }
 }
