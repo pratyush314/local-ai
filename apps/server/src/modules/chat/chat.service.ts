@@ -81,9 +81,9 @@ export class ChatService {
   ): AsyncIterable<ChatStreamEvent> {
     await this.conversationsService.getConversation(conversationId);
 
-    try {
-      this.acquireGeneration(conversationId);
+    this.acquireGeneration(conversationId);
 
+    try {
       const userMessage = await this.messagesService.create({
         id: crypto.randomUUID(),
         conversationId,

@@ -1,14 +1,16 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 
 import { CHAT_ROLES } from '@local-ai/constants/chat';
 
 import { AppConfigService } from '../../common/config/app-config.service.js';
 import { LlmService } from '../llm/llm.service.js';
 import type { LlmMessage } from '../llm/types/llm-message.type.js';
-import { PreparedContext } from './types/context.types.js';
+import type { PreparedContext } from './types/context.types.js';
 
 @Injectable()
 export class ContextService {
+  private readonly logger = new Logger(ContextService.name);
+
   constructor(
     private readonly configService: AppConfigService,
     private readonly llmService: LlmService,
@@ -31,6 +33,7 @@ export class ContextService {
     }
 
     const { prefix, turns } = this.splitIntoTurns(messages);
+    const turnCountBefore = turns.length;
 
     const buildCandidate = (start: number): LlmMessage[] => [
       ...prefix,
@@ -58,14 +61,26 @@ export class ContextService {
     const allTokens = await countAt(0);
 
     if (allTokens <= inputBudget) {
-      return {
+      const prepared = {
         messages: allMessages,
         maxTokens: Math.min(
           outputLimit,
           contextSize - allTokens - safetyTokens,
         ),
         promptTokens: allTokens,
+        contextSize,
+        inputBudget,
+        historyTrimmed: false,
+        messageCountBefore: messages.length,
+        messageCountAfter: allMessages.length,
+        remainingTokens: contextSize - allTokens - safetyTokens,
+        turnCountBefore,
+        turnCountAfter: turns.length,
       };
+
+      this.logPreparedContext(prepared);
+
+      return prepared;
     }
 
     if (turns.length === 0) {
@@ -102,14 +117,44 @@ export class ContextService {
     const selectedMessages = buildCandidate(selectedStart);
     const promptTokens = await countAt(selectedStart);
 
-    return {
+    const prepared: PreparedContext = {
       messages: selectedMessages,
       maxTokens: Math.min(
         outputLimit,
         contextSize - promptTokens - safetyTokens,
       ),
       promptTokens,
+      contextSize,
+      inputBudget,
+      historyTrimmed: true,
+      messageCountBefore: messages.length,
+      messageCountAfter: selectedMessages.length,
+      remainingTokens: contextSize - promptTokens - safetyTokens,
+      turnCountBefore,
+      turnCountAfter: turns.length - selectedStart,
     };
+
+    this.logPreparedContext(prepared);
+
+    return prepared;
+  }
+
+  private logPreparedContext(context: PreparedContext): void {
+    this.logger.debug(
+      JSON.stringify({
+        event: 'context_prepared',
+        promptTokens: context.promptTokens,
+        contextSize: context.contextSize,
+        inputBudget: context.inputBudget,
+        maxOutputTokens: context.maxTokens,
+        historyTrimmed: context.historyTrimmed,
+        messageCountBefore: context.messageCountBefore,
+        messageCountAfter: context.messageCountAfter,
+        remainingTokens: context.remainingTokens,
+        turnCountBefore: context.turnCountBefore,
+        turnCountAfter: context.turnCountAfter,
+      }),
+    );
   }
 
   private splitIntoTurns(messages: LlmMessage[]): {
