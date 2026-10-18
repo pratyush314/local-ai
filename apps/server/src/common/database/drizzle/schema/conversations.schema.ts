@@ -1,6 +1,7 @@
 import { index, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 import { timestamps } from './base-columns.js';
+import { projects } from './projects.schema.js';
 
 export const conversations = sqliteTable(
   'conversations',
@@ -8,6 +9,11 @@ export const conversations = sqliteTable(
     id: text('id')
       .primaryKey()
       .$defaultFn(() => crypto.randomUUID()),
+
+    projectId: text('project_id').references(() => projects.id, {
+      onDelete: 'set null',
+      onUpdate: 'cascade',
+    }),
 
     title: text('title').notNull(),
 
