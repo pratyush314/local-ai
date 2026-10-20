@@ -66,4 +66,17 @@ export class ConversationsRepository {
       .delete(conversations)
       .where(eq(conversations.id, id));
   }
+
+  async setProject(conversationId: string, projectId: string | null) {
+    const [conversation] = await this.database.db
+      .update(conversations)
+      .set({
+        projectId,
+        updatedAt: new Date(),
+      })
+      .where(eq(conversations.id, conversationId))
+      .returning();
+
+    return conversation;
+  }
 }

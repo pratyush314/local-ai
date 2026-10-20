@@ -1,11 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { ConversationsRepository } from './conversations.repository.js';
+import { ProjectsService } from '../projects/projects.service.js';
 
 @Injectable()
 export class ConversationsService {
   constructor(
     private readonly conversationsRepository: ConversationsRepository,
+    private readonly projectsService: ProjectsService,
   ) {}
 
   async createConversation(title = 'New Chat') {
@@ -56,5 +58,24 @@ export class ConversationsService {
     await this.getConversation(id);
 
     await this.conversationsRepository.deleteConversation(id);
+  }
+
+  async assignProject(conversationId: string, projectId: string | null) {
+    await this.getConversation(conversationId);
+
+    if (projectId !== null) {
+      await this.projectsService.getProject(projectId);
+    }
+
+    const conversation = await this.conversationsRepository.setProject(
+      conversationId,
+      projectId,
+    );
+
+    if (!conversation) {
+      throw new NotFoundException('Conversation not found');
+    }
+
+    return conversation;
   }
 }

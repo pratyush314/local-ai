@@ -3,6 +3,11 @@ import { index, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { timestamps } from './base-columns.js';
 import { messages } from './messages.schema.js';
 import { projects } from './projects.schema.js';
+import {
+  PROJECT_MEMORY_KINDS,
+  PROJECT_MEMORY_SOURCE_TYPES,
+  PROJECT_MEMORY_STATUSES,
+} from '@local-ai/constants';
 
 export const projectMemories = sqliteTable(
   'project_memories',
@@ -19,7 +24,7 @@ export const projectMemories = sqliteTable(
       }),
 
     kind: text('kind', {
-      enum: ['decision', 'constraint', 'fact', 'task'],
+      enum: PROJECT_MEMORY_KINDS,
     }).notNull(),
 
     subject: text('subject').notNull(),
@@ -27,7 +32,7 @@ export const projectMemories = sqliteTable(
     content: text('content').notNull(),
 
     status: text('status', {
-      enum: ['active', 'superseded', 'archived', 'unverified'],
+      enum: PROJECT_MEMORY_STATUSES,
     })
       .notNull()
       .default('active'),
@@ -37,7 +42,7 @@ export const projectMemories = sqliteTable(
     confidence: real('confidence'),
 
     sourceType: text('source_type', {
-      enum: ['message', 'file', 'user', 'git', 'system'],
+      enum: PROJECT_MEMORY_SOURCE_TYPES,
     }).notNull(),
 
     // Preserve the original chat message as evidence when applicable.
