@@ -4,42 +4,22 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
-import {
-  PROJECT_MEMORY_KINDS,
-  PROJECT_MEMORY_SOURCE_TYPES,
-  PROJECT_MEMORY_STATUSES,
-} from '@local-ai/constants';
+import type { ProjectMemoryStatus } from '@local-ai/constants';
 
-import type {
-  ProjectMemoryKind,
-  ProjectMemorySourceType,
-  ProjectMemoryStatus,
-} from '@local-ai/constants';
-
-import { ProjectsService } from '../projects/projects.service.js';
+import { ConversationsService } from '../conversations/conversations.service.js';
 import { MessagesService } from '../messages/messages.service.js';
+import { ProjectsService } from '../projects/projects.service.js';
 import { MemoryRepository } from './memory.repository.js';
-
-const isValidMemoryKind = (value: string): value is ProjectMemoryKind =>
-  (PROJECT_MEMORY_KINDS as readonly string[]).includes(value);
-
-const isValidSourceType = (value: string): value is ProjectMemorySourceType =>
-  (PROJECT_MEMORY_SOURCE_TYPES as readonly string[]).includes(value);
-
-const isValidMemoryStatus = (value: string): value is ProjectMemoryStatus =>
-  (PROJECT_MEMORY_STATUSES as readonly string[]).includes(value);
-
-export interface CreateMemoryInput {
-  projectId: string;
-  kind: ProjectMemoryKind;
-  subject: string;
-  content: string;
-  sourceType: ProjectMemorySourceType;
-  sourceMessageId?: string | null;
-  sourcePath?: string | null;
-  sourceReference?: string | null;
-  confidence?: number | null;
-}
+import {
+  CreateMemoryInput,
+  RetrievedProjectMemory,
+} from './types/memory.types.js';
+import {
+  isValidMemoryKind,
+  isValidMemoryStatus,
+  isValidSourceType,
+} from './validations/memory.validations.js';
+import { scoreMemory, tokenize } from './utils/memory.utils.js';
 
 @Injectable()
 export class MemoryService {
@@ -47,6 +27,7 @@ export class MemoryService {
     private readonly memoryRepository: MemoryRepository,
     private readonly projectsService: ProjectsService,
     private readonly messagesService: MessagesService,
+    private readonly conversationsService: ConversationsService,
   ) {}
 
   async createMemory(input: CreateMemoryInput) {
@@ -93,11 +74,14 @@ export class MemoryService {
         throw new NotFoundException('Source message not found');
       }
 
-      // A message from another conversation/project must not be
-      // accepted as evidence for this project's memory.
-      if (sourceMessage.conversationId == null) {
+      const sourceConversation =
+        await this.conversationsService.getConversation(
+          sourceMessage.conversationId,
+        );
+
+      if (sourceConversation.projectId !== input.projectId) {
         throw new BadRequestException(
-          'Source message is not associated with a conversation',
+          'Source message must belong to a conversation associated with this project',
         );
       }
     }
@@ -172,5 +156,37 @@ export class MemoryService {
     }
 
     return updated;
+  }
+
+  async retrieveRelevantMemories(
+    projectId: string,
+    query: string,
+    limit = 8,
+  ): Promise<RetrievedProjectMemory[]> {
+    await this.projectsService.getProject(projectId);
+
+    const queryTokens = tokenize(query);
+
+    if (queryTokens.size === 0) {
+      return [];
+    }
+
+    const memories = await this.memoryRepository.findActiveByProject(projectId);
+
+    return memories
+      .map((memory) => ({
+        id: memory.id,
+        kind: memory.kind,
+        subject: memory.subject,
+        content: memory.content,
+        confidence: memory.confidence,
+        sourceType: memory.sourceType,
+        sourcePath: memory.sourcePath,
+        sourceReference: memory.sourceReference,
+        score: scoreMemory(queryTokens, memory),
+      }))
+      .filter((memory) => memory.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, Math.max(0, Math.min(limit, 20)));
   }
 }

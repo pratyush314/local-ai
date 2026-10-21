@@ -15,7 +15,8 @@
 		"./conversation": "./dist/conversation/index.js",
 		"./document": "./dist/document/index.js",
 		"./file": "./dist/file/index.js",
-		"./workspace": "./dist/workspace/index.js"
+		"./workspace": "./dist/workspace/index.js",
+		"./project-memory": "./dist/project-memory/index.js"
 	},
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json",
