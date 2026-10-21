@@ -1,17 +1,25 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 
-import type { NewProject } from '../../common/database/drizzle/schema/index.js';
+import type {
+  CreateProjectInput,
+  UpdateProjectInput,
+} from '@local-ai/contracts/workspace';
+
 import { ProjectsRepository } from './projects.repository.js';
 
 @Injectable()
 export class ProjectsService {
   constructor(private readonly projectsRepository: ProjectsRepository) {}
 
-  async createProject(input: Pick<NewProject, 'name' | 'rootPath'>) {
+  async createProject(input: CreateProjectInput) {
     const name = input.name.trim();
 
     if (!name) {
-      throw new Error('Project name cannot be empty');
+      throw new BadRequestException('Project name cannot be empty');
     }
 
     const rootPath = input.rootPath?.trim() || null;
@@ -37,26 +45,26 @@ export class ProjectsService {
     return this.projectsRepository.findAll();
   }
 
-  async updateProject(
-    id: string,
-    input: Partial<Pick<NewProject, 'name' | 'rootPath'>>,
-  ) {
+  async updateProject(id: string, input: UpdateProjectInput) {
     await this.getProject(id);
 
-    const update: Partial<Pick<NewProject, 'name' | 'rootPath'>> = {};
+    const update: {
+      name?: string;
+      rootPath?: string | null;
+    } = {};
 
     if (input.name !== undefined) {
       const name = input.name.trim();
 
       if (!name) {
-        throw new Error('Project name cannot be empty');
+        throw new BadRequestException('Project name cannot be empty');
       }
 
       update.name = name;
     }
 
-    if (input.rootPath) {
-      update.rootPath = input.rootPath.trim() || null;
+    if (input.rootPath !== undefined) {
+      update.rootPath = input.rootPath?.trim() || null;
     }
 
     const project = await this.projectsRepository.update(id, update);

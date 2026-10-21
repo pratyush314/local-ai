@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { conversationSchema } from './conversation.schema';
+import { conversationSchema } from './conversation.schema.js';
 
 export const conversationsSchema = z.array(conversationSchema);
 
