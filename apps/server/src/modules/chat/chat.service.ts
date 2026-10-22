@@ -19,6 +19,7 @@ import { LlmService } from '../llm/llm.service.js';
 import type { LlmMessage } from '../llm/types/llm-message.type.js';
 import { MessagesService } from '../messages/messages.service.js';
 import { ContextService } from '../context/context.service.js';
+import { MemoryService } from '../memory/memory.service.js';
 
 @Injectable()
 export class ChatService {
@@ -31,6 +32,7 @@ export class ChatService {
     private readonly messagesService: MessagesService,
     private readonly llmService: LlmService,
     private readonly contextService: ContextService,
+    private readonly memoryService: MemoryService,
   ) {}
 
   async *startChat(
@@ -255,7 +257,25 @@ export class ChatService {
     try {
       const messages = await this.buildLlmMessages(conversationId);
 
-      const context = await this.contextService.prepare(messages, signal);
+      const projectMemoryContext = await this.buildProjectMemoryContext(
+        conversationId,
+        messages,
+      );
+
+      const messagesWithMemory: LlmMessage[] = projectMemoryContext
+        ? [
+            {
+              role: CHAT_ROLES.SYSTEM,
+              content: projectMemoryContext,
+            },
+            ...messages,
+          ]
+        : messages;
+
+      const context = await this.contextService.prepare(
+        messagesWithMemory,
+        signal,
+      );
 
       for await (const event of this.llmService.stream({
         messages: context.messages,
@@ -414,5 +434,72 @@ export class ChatService {
         role: message.role,
         content: message.content,
       }));
+  }
+
+  private async buildProjectMemoryContext(
+    conversationId: string,
+    messages: LlmMessage[],
+  ): Promise<string | null> {
+    const conversation =
+      await this.conversationsService.getConversation(conversationId);
+
+    if (!conversation.projectId) {
+      return null;
+    }
+
+    const latestUserMessage = [...messages]
+      .reverse()
+      .find((message) => message.role === CHAT_ROLES.USER);
+
+    if (!latestUserMessage) {
+      return null;
+    }
+
+    const memories = await this.memoryService.retrieveRelevantMemories(
+      conversation.projectId,
+      latestUserMessage.content,
+      8,
+    );
+
+    if (memories.length === 0) {
+      return null;
+    }
+
+    this.logger.debug({
+      event: 'project_memory_retrieved',
+      conversationId,
+      projectId: conversation.projectId,
+      queryTokenCount: latestUserMessage.content
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean).length,
+      retrievedCount: memories.length,
+      memories: memories.map((memory) => ({
+        id: memory.id,
+        kind: memory.kind,
+        score: Number(memory.score.toFixed(2)),
+      })),
+    });
+
+    const memoryEntries = memories.map((memory, index) => {
+      return [
+        `${index + 1}. [${memory.kind}] ${memory.subject}`,
+        memory.content,
+        `Source: ${memory.sourceType}`,
+        memory.sourcePath ? `File: ${memory.sourcePath}` : null,
+      ]
+        .filter(Boolean)
+        .join('\n');
+    });
+
+    return [
+      'Relevant project memory follows.',
+      'Use it as supporting context when answering questions about this project.',
+      'Treat these entries as potentially useful project facts, decisions, constraints, or tasks.',
+      'If a memory conflicts with the current user message or other reliable context, do not blindly follow it; explain the conflict when relevant.',
+      'Do not claim to have inspected files or verified facts solely because they appear in memory.',
+      '',
+      ...memoryEntries,
+    ].join('\n\n');
   }
 }

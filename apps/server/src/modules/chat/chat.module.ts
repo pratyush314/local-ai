@@ -7,9 +7,16 @@ import { MessagesModule } from '../messages/messages.module.js';
 
 import { ChatController } from './chat.controller.js';
 import { ChatService } from './chat.service.js';
+import { MemoryModule } from '../memory/memory.module.js';
 
 @Module({
-  imports: [ContextModule, ConversationsModule, MessagesModule, LlmModule],
+  imports: [
+    ContextModule,
+    ConversationsModule,
+    MessagesModule,
+    LlmModule,
+    MemoryModule,
+  ],
   controllers: [ChatController],
   providers: [ChatService],
 })
