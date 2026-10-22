@@ -173,20 +173,23 @@ export class MemoryService {
 
     const memories = await this.memoryRepository.findActiveByProject(projectId);
 
-    return memories
-      .map((memory) => ({
-        id: memory.id,
-        kind: memory.kind,
-        subject: memory.subject,
-        content: memory.content,
-        confidence: memory.confidence,
-        sourceType: memory.sourceType,
-        sourcePath: memory.sourcePath,
-        sourceReference: memory.sourceReference,
-        score: scoreMemory(queryTokens, memory),
-      }))
-      .filter((memory) => memory.score > 0)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, Math.max(0, Math.min(limit, 20)));
+    return (
+      memories
+        .map((memory) => ({
+          id: memory.id,
+          kind: memory.kind,
+          subject: memory.subject,
+          content: memory.content,
+          confidence: memory.confidence,
+          sourceType: memory.sourceType,
+          sourcePath: memory.sourcePath,
+          sourceReference: memory.sourceReference,
+          score: scoreMemory(queryTokens, memory),
+        }))
+        // Require a meaningful match rather than returning any shared word.
+        .filter((memory) => memory.score >= 0.15)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, Math.max(0, Math.min(limit, 20)))
+    );
   }
 }
