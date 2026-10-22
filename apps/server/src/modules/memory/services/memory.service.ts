@@ -6,20 +6,20 @@ import {
 
 import type { ProjectMemoryStatus } from '@local-ai/constants';
 
-import { ConversationsService } from '../conversations/conversations.service.js';
-import { MessagesService } from '../messages/messages.service.js';
-import { ProjectsService } from '../projects/projects.service.js';
-import { MemoryRepository } from './memory.repository.js';
+import { ConversationsService } from '../../conversations/conversations.service.js';
+import { MessagesService } from '../../messages/messages.service.js';
+import { ProjectsService } from '../../projects/projects.service.js';
+import { MemoryRepository } from '../memory.repository.js';
 import {
   CreateMemoryInput,
   RetrievedProjectMemory,
-} from './types/memory.types.js';
+} from '../types/memory.types.js';
 import {
   isValidMemoryKind,
   isValidMemoryStatus,
   isValidSourceType,
-} from './validations/memory.validations.js';
-import { scoreMemory, tokenize } from './utils/memory.utils.js';
+} from '../validations/memory.validations.js';
+import { scoreMemory, tokenize } from '../utils/memory.utils.js';
 
 @Injectable()
 export class MemoryService {

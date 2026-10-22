@@ -11,7 +11,7 @@ import {
 import { projectIdSchema } from '@local-ai/contracts/workspace';
 
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
-import { MemoryService } from './memory.service.js';
+import { MemoryService } from './services/memory.service.js';
 
 @Controller()
 export class MemoryController {

@@ -19,7 +19,8 @@ import { LlmService } from '../llm/llm.service.js';
 import type { LlmMessage } from '../llm/types/llm-message.type.js';
 import { MessagesService } from '../messages/messages.service.js';
 import { ContextService } from '../context/context.service.js';
-import { MemoryService } from '../memory/memory.service.js';
+import { MemoryService } from '../memory/services/memory.service.js';
+import { MemoryExtractorService } from '../memory/services/memory-extractor.service.js';
 
 @Injectable()
 export class ChatService {
@@ -33,6 +34,7 @@ export class ChatService {
     private readonly llmService: LlmService,
     private readonly contextService: ContextService,
     private readonly memoryService: MemoryService,
+    private readonly memoryExtractorService: MemoryExtractorService,
   ) {}
 
   async *startChat(
@@ -67,6 +69,7 @@ export class ChatService {
 
       yield* this.generateAssistantResponse(
         conversation.id,
+        userMessage.id,
         input.content,
         signal,
         true,
@@ -104,6 +107,7 @@ export class ChatService {
 
       yield* this.generateAssistantResponse(
         conversationId,
+        userMessage.id,
         input.content,
         signal,
         false,
@@ -165,6 +169,7 @@ export class ChatService {
 
       yield* this.generateAssistantResponse(
         conversationId,
+        precedingUserMessage.id,
         precedingUserMessage.content,
         signal,
         isFirstMessage,
@@ -218,6 +223,7 @@ export class ChatService {
 
       yield* this.generateAssistantResponse(
         conversationId,
+        updatedMessage.id,
         normalizedContent,
         signal,
         isFirstMessage,
@@ -229,6 +235,7 @@ export class ChatService {
 
   private async *generateAssistantResponse(
     conversationId: string,
+    userMessageId: string,
     userContent: string,
     signal?: AbortSignal,
     shouldGenerateTitle = false,
@@ -309,6 +316,15 @@ export class ChatService {
       });
 
       await this.conversationsService.touchConversation(conversationId);
+
+      // Start best-effort memory extraction without delaying the chat stream.
+      void this.extractProjectMemoriesInBackground({
+        conversationId,
+        userMessageId,
+        userContent,
+        assistantResponse: generatedContent,
+        signal,
+      });
 
       yield {
         type: 'done',
@@ -501,5 +517,41 @@ export class ChatService {
       '',
       ...memoryEntries,
     ].join('\n\n');
+  }
+
+  private async extractProjectMemoriesInBackground(input: {
+    conversationId: string;
+    userMessageId: string;
+    userContent: string;
+    assistantResponse: string;
+    signal?: AbortSignal;
+  }): Promise<void> {
+    try {
+      if (input.signal?.aborted) {
+        return;
+      }
+
+      const conversation = await this.conversationsService.getConversation(
+        input.conversationId,
+      );
+
+      if (!conversation.projectId) {
+        return;
+      }
+
+      await this.memoryExtractorService.extractFromExchange({
+        projectId: conversation.projectId,
+        userMessageId: input.userMessageId,
+        userMessage: input.userContent,
+        assistantResponse: input.assistantResponse,
+        signal: input.signal,
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Background project memory extraction failed: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
+      );
+    }
   }
 }
