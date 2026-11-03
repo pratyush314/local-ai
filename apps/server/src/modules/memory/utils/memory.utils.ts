@@ -110,4 +110,33 @@ function scoreMemory(
   return queryTokens.size > 0 ? score / queryTokens.size : 0;
 }
 
-export { scoreMemory, tokenize };
+function calculateMemorySimilarity(
+  first: {
+    subject: string;
+    content: string;
+  },
+  second: {
+    subject: string;
+    content: string;
+  },
+): number {
+  const firstTokens = tokenize(`${first.subject} ${first.content}`);
+  const secondTokens = tokenize(`${second.subject} ${second.content}`);
+
+  if (firstTokens.size === 0 || secondTokens.size === 0) {
+    return 0;
+  }
+
+  let intersection = 0;
+
+  for (const token of firstTokens) {
+    if (secondTokens.has(token)) {
+      intersection += 1;
+    }
+  }
+
+  // Dice similarity: 2 * intersection / total unique token counts.
+  return (2 * intersection) / (firstTokens.size + secondTokens.size);
+}
+
+export { scoreMemory, tokenize, calculateMemorySimilarity };
