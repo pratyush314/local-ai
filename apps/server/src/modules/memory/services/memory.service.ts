@@ -19,7 +19,11 @@ import {
   isValidMemoryStatus,
   isValidSourceType,
 } from '../validations/memory.validations.js';
-import { scoreMemory, tokenize } from '../utils/memory.utils.js';
+import {
+  calculateMemorySimilarity,
+  scoreMemory,
+  tokenize,
+} from '../utils/memory.utils.js';
 
 @Injectable()
 export class MemoryService {
@@ -124,6 +128,69 @@ export class MemoryService {
       sourcePath: input.sourcePath?.trim() || null,
       sourceReference: input.sourceReference?.trim() || null,
     });
+  }
+
+  async findDuplicateMemory(input: {
+    projectId: string;
+    kind: CreateMemoryInput['kind'];
+    subject: string;
+    content: string;
+  }) {
+    const activeMemories = await this.memoryRepository.findActiveByProject(
+      input.projectId,
+    );
+
+    const normalize = (value: string) =>
+      value.toLowerCase().replace(/\s+/g, ' ').trim();
+
+    const normalizedSubject = normalize(input.subject);
+    const normalizedContent = normalize(input.content);
+
+    const candidates = activeMemories
+      .filter((memory) => {
+        if (memory.kind !== input.kind) {
+          return false;
+        }
+
+        // A decision with the same subject but changed content
+        // should reach createMemory(), where the old decision
+        // will be superseded.
+        if (
+          input.kind === 'decision' &&
+          normalize(memory.subject) === normalizedSubject &&
+          normalize(memory.content) !== normalizedContent
+        ) {
+          return false;
+        }
+
+        return true;
+      })
+      .map((memory) => ({
+        memory,
+        similarity: calculateMemorySimilarity(
+          {
+            subject: input.subject,
+            content: input.content,
+          },
+          {
+            subject: memory.subject,
+            content: memory.content,
+          },
+        ),
+      }))
+      .filter((candidate) => candidate.similarity >= 0.8)
+      .sort((a, b) => b.similarity - a.similarity);
+
+    const duplicate = candidates[0];
+
+    if (!duplicate) {
+      return null;
+    }
+
+    return {
+      memory: duplicate.memory,
+      similarity: duplicate.similarity,
+    };
   }
 
   async getMemory(id: string) {

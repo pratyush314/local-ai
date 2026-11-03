@@ -9,6 +9,7 @@ import { CHAT_ROLES } from '@local-ai/constants/chat';
 
 import { LlmService } from '../../llm/llm.service.js';
 import { MemoryService } from './memory.service.js';
+import { EXTRACT_SYSTEM_PROMPT } from '../constants/system-prompts.constants.js';
 
 @Injectable()
 export class MemoryExtractorService {
@@ -35,19 +36,7 @@ export class MemoryExtractorService {
         messages: [
           {
             role: CHAT_ROLES.SYSTEM,
-            content: [
-              'Extract durable project memories from the conversation exchange.',
-              'Return only a JSON object with a "memories" array.',
-              'Each item must contain kind, subject, content, and confidence.',
-              'Allowed kinds: decision, constraint, fact, task.',
-              'Extract at most 5 memories.',
-              'Only include explicit, useful information about the project.',
-              'Prefer architectural decisions, constraints, confirmed facts, and actionable tasks.',
-              'Do not infer facts that were not explicitly stated.',
-              'Do not extract generic advice, temporary questions, or unsupported assistant claims.',
-              'If nothing durable was established, return {"memories":[]}.',
-              'Confidence must be a number from 0 to 1.',
-            ].join('\n'),
+            content: EXTRACT_SYSTEM_PROMPT,
           },
           {
             role: CHAT_ROLES.USER,
@@ -97,12 +86,37 @@ export class MemoryExtractorService {
 
       const memories = this.deduplicate(result.data.memories);
 
+      let persistedCount = 0;
+      let duplicateCount = 0;
+      let failedCount = 0;
+
       for (const memory of memories) {
         if (input.signal?.aborted) {
           return;
         }
 
         try {
+          const duplicate = await this.memoryService.findDuplicateMemory({
+            projectId: input.projectId,
+            kind: memory.kind,
+            subject: memory.subject,
+            content: memory.content,
+          });
+
+          if (duplicate) {
+            duplicateCount += 1;
+
+            this.logger.debug({
+              event: 'project_memory_duplicate_skipped',
+              projectId: input.projectId,
+              subject: memory.subject,
+              existingMemoryId: duplicate.memory.id,
+              similarity: duplicate.similarity,
+            });
+
+            continue;
+          }
+
           await this.memoryService.createMemory({
             projectId: input.projectId,
             kind: memory.kind,
@@ -112,7 +126,11 @@ export class MemoryExtractorService {
             sourceType: 'message',
             sourceMessageId: input.userMessageId,
           });
+
+          persistedCount += 1;
         } catch (error) {
+          failedCount += 1;
+
           this.logger.warn(
             `Could not persist extracted memory "${memory.subject}": ${
               error instanceof Error ? error.message : 'Unknown error'
@@ -126,7 +144,10 @@ export class MemoryExtractorService {
         projectId: input.projectId,
         sourceMessageId: input.userMessageId,
         extractedCount: result.data.memories.length,
-        persistedCandidates: memories.length,
+        candidateCount: memories.length,
+        persistedCount,
+        duplicateCount,
+        failedCount,
       });
     } catch (error) {
       this.logger.warn(
