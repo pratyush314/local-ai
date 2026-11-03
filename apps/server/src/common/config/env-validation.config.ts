@@ -19,19 +19,7 @@ export const envValidationSchema = z.object({
     .min(1, 'DATABASE_URL is required')
     .default('./data/local-ai.db'),
 
-  DATABASE_PATH: z.string().min(1, 'DATABASE_PATH is required'),
-
-  LLAMA_MODEL_PATH: z.string().min(1, 'LLAMA_MODEL_PATH is required'),
-
-  LLAMA_CPP_PATH: z.string().min(1, 'LLAMA_CPP_PATH is required'),
-
   LLAMA_CPP_BASE_URL: z.string().url(),
-
-  LLAMA_SERVER_PORT: z.coerce.number().int().min(1).max(65535).default(8080),
-
-  STORAGE_PATH: z.string().min(1, 'STORAGE_PATH is required'),
-
-  MAX_FILE_SIZE_MB: positiveIntFromEnvSchema.default(100),
 
   LLAMA_CONTEXT_SIZE: positiveIntFromEnvSchema.default(8192),
 
