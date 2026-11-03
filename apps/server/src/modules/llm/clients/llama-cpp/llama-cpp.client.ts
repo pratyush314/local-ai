@@ -1,57 +1,73 @@
 import { Injectable } from '@nestjs/common';
 
-import { AppConfigService } from '../../../../common/config/app-config.service.js';
 import { AI_DEFAULTS } from '@local-ai/constants/ai';
+import { AppConfigService } from '../../../../common/config/app-config.service.js';
 
+import OpenAI from 'openai';
+import { ChatCompletionCreateParamsNonStreaming } from 'openai/resources';
+import { LlmProvider } from '../../interfaces/llm-provider.interface.js';
 import type { LlmGenerationOptions } from '../../types/llm-generation.type.js';
+import { LlmMessage } from '../../types/llm-message.type.js';
 import type { LlmStreamEvent } from '../../types/llm-stream.type.js';
 import {
   LlamaCppApplyTemplateResponse,
-  LlamaCppResponse,
   LlamaCppStreamResponse,
   LlamaCppTokenizeResponse,
 } from './llama-cpp.interface.js';
-import { LlmMessage } from '../../types/llm-message.type.js';
-import { LlmProvider } from '../../interfaces/llm-provider.interface.js';
 
 @Injectable()
 export class LlamaCppClient implements LlmProvider {
-  constructor(private readonly configService: AppConfigService) {}
+  private readonly client: OpenAI;
+
+  constructor(private readonly configService: AppConfigService) {
+    const baseUrl = this.configService
+      .getOrThrow('LLAMA_CPP_BASE_URL')
+      .replace(/\/+$/, '');
+
+    this.client = new OpenAI({
+      baseURL: `${baseUrl}/v1`,
+      apiKey: 'local',
+    });
+  }
 
   async generate(options: LlmGenerationOptions): Promise<string> {
-    const baseUrl = this.configService.getOrThrow('LLAMA_CPP_BASE_URL');
+    const requestBody = {
+      model: 'local-model',
+      messages: options.messages,
+      temperature: options.temperature ?? AI_DEFAULTS.TEMPERATURE,
+      top_p: options.topP ?? AI_DEFAULTS.TOP_P,
+      max_completion_tokens: options.maxTokens ?? AI_DEFAULTS.MAX_TOKENS,
+      stop: options.stop,
+      stream: false,
+      ...(options.chatTemplateKwargs
+        ? { chat_template_kwargs: options.chatTemplateKwargs }
+        : {}),
+    } satisfies ChatCompletionCreateParamsNonStreaming & {
+      chat_template_kwargs?: Record<string, unknown>;
+    };
 
     try {
-      const response = await fetch(`${baseUrl}/v1/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messages: options.messages,
-          temperature: options.temperature ?? AI_DEFAULTS.TEMPERATURE,
-          top_p: options.topP ?? AI_DEFAULTS.TOP_P,
-          max_tokens: options.maxTokens ?? AI_DEFAULTS.MAX_TOKENS,
-          stop: options.stop,
-          stream: false,
-        }),
+      const response = await this.client.chat.completions.create(requestBody, {
         signal: options.signal,
       });
 
-      if (!response.ok) {
-        const errorBody = await response.text();
+      const choice = response.choices[0];
 
-        throw new Error(
-          `llama.cpp request failed (${response.status}): ${errorBody}`,
-        );
+      if (!choice) {
+        throw new Error('llama.cpp returned no completion choices');
       }
 
-      const data = (await response.json()) as LlamaCppResponse;
+      const content = choice.message.content;
 
-      const content = data.choices[0]?.message?.content;
-
-      if (!content) {
-        throw new Error('llama.cpp returned an empty response');
+      if (typeof content !== 'string' || !content.trim()) {
+        throw new Error(
+          [
+            'llama.cpp returned empty content.',
+            `Finish reason: ${choice.finish_reason ?? 'unknown'}.`,
+            `Prompt tokens: ${response.usage?.prompt_tokens ?? 'unknown'}.`,
+            `Completion tokens: ${response.usage?.completion_tokens ?? 'unknown'}.`,
+          ].join(' '),
+        );
       }
 
       return content;
