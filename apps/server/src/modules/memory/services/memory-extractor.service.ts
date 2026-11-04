@@ -40,12 +40,15 @@ export class MemoryExtractorService {
           },
           {
             role: CHAT_ROLES.USER,
+
             content: [
-              'User message:',
+              '<user_message>',
               input.userMessage,
+              '</user_message>',
               '',
-              'Assistant response:',
+              '<assistant_response>',
               input.assistantResponse,
+              '</assistant_response>',
             ].join('\n'),
           },
         ],
@@ -84,10 +87,27 @@ export class MemoryExtractorService {
         return;
       }
 
-      const memories = this.deduplicate(result.data.memories);
+      const invalidMemories = result.data.memories.filter(
+        (memory) => !this.hasValidEvidence(memory, input.userMessage),
+      );
+
+      for (const memory of invalidMemories) {
+        this.logger.warn({
+          event: 'project_memory_invalid_evidence',
+          subject: memory.subject,
+          evidence: memory.evidence,
+        });
+      }
+
+      const evidenceValidatedMemories = result.data.memories.filter((memory) =>
+        this.hasValidEvidence(memory, input.userMessage),
+      );
+
+      const memories = this.deduplicate(evidenceValidatedMemories);
 
       let persistedCount = 0;
       let duplicateCount = 0;
+      const invalidEvidenceCount = invalidMemories.length;
       let failedCount = 0;
 
       for (const memory of memories) {
@@ -122,6 +142,7 @@ export class MemoryExtractorService {
             kind: memory.kind,
             subject: memory.subject,
             content: memory.content,
+            evidence: memory.evidence,
             confidence: memory.confidence,
             sourceType: 'message',
             sourceMessageId: input.userMessageId,
@@ -144,6 +165,8 @@ export class MemoryExtractorService {
         projectId: input.projectId,
         sourceMessageId: input.userMessageId,
         extractedCount: result.data.memories.length,
+        evidenceValidatedCount: evidenceValidatedMemories.length,
+        invalidEvidenceCount,
         candidateCount: memories.length,
         persistedCount,
         duplicateCount,
@@ -158,11 +181,32 @@ export class MemoryExtractorService {
     }
   }
 
+  private hasValidEvidence(
+    memory: ExtractedProjectMemory,
+    userMessage: string,
+  ): boolean {
+    const normalize = (value: string) =>
+      value
+        .replace(/\s+/g, ' ')
+        .trim()
+        .replace(/^["'`]+|["'`]+$/g, '');
+
+    const normalizedMessage = normalize(userMessage);
+
+    const normalizedEvidence = normalize(
+      memory.evidence.replace(/^user message:\s*/i, ''),
+    );
+
+    if (!normalizedEvidence) {
+      return false;
+    }
+
+    return normalizedMessage.includes(normalizedEvidence);
+  }
+
   private extractJson(raw: string): string | null {
     const text = raw.trim();
 
-    // Prefer a complete JSON object, allowing providers that wrap
-    // structured output in a Markdown code fence.
     const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
     const candidate = fenced?.[1]?.trim() ?? text;
 

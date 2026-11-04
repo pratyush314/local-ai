@@ -37,6 +37,7 @@ export class MemoryService {
   async createMemory(input: CreateMemoryInput) {
     const subject = input.subject.trim();
     const content = input.content.trim();
+    const evidence = input.evidence?.trim() || null;
 
     if (!subject) {
       throw new BadRequestException('Memory subject cannot be empty');
@@ -44,6 +45,12 @@ export class MemoryService {
 
     if (!content) {
       throw new BadRequestException('Memory content cannot be empty');
+    }
+
+    if (evidence && evidence.length > 1_000) {
+      throw new BadRequestException(
+        'Memory evidence cannot exceed 1000 characters',
+      );
     }
 
     if (!isValidMemoryKind(input.kind)) {
@@ -121,6 +128,7 @@ export class MemoryService {
       kind: input.kind,
       subject,
       content,
+      evidence,
       status: 'active',
       confidence: input.confidence ?? null,
       sourceType: input.sourceType,
