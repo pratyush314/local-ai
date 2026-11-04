@@ -31,6 +31,8 @@ export const projectMemories = sqliteTable(
 
     content: text('content').notNull(),
 
+    evidence: text('evidence'),
+
     status: text('status', {
       enum: PROJECT_MEMORY_STATUSES,
     })

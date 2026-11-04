@@ -1,0 +1,1 @@
+ALTER TABLE `project_memories` ADD `evidence` text;

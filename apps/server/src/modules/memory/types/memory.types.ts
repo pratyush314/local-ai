@@ -13,6 +13,7 @@ export interface CreateMemoryInput {
   sourcePath?: string | null;
   sourceReference?: string | null;
   confidence?: number | null;
+  evidence?: string | null;
 }
 export interface RetrievedProjectMemory {
   id: string;
@@ -20,6 +21,7 @@ export interface RetrievedProjectMemory {
   subject: string;
   content: string;
   confidence: number | null;
+  evidence?: string | null;
   sourceType: ProjectMemorySourceType;
   sourcePath: string | null;
   sourceReference: string | null;

@@ -7,6 +7,7 @@ export const extractedProjectMemorySchema = z.object({
 	subject: z.string().trim().min(1).max(200),
 	content: z.string().trim().min(1).max(20_000),
 	confidence: z.number().min(0).max(1),
+	evidence: z.string().trim().min(1).max(1_000),
 });
 
 export const extractProjectMemoriesSchema = z.object({
