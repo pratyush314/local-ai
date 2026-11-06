@@ -11,8 +11,6 @@ export const projects = sqliteTable(
 
     name: text('name').notNull(),
 
-    rootPath: text('root_path'),
-
     ...timestamps,
   },
   (table) => [index('projects_updated_at_idx').on(table.updatedAt)],

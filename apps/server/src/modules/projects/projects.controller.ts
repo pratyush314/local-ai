@@ -14,7 +14,7 @@ import {
   updateProjectSchema,
   type CreateProjectInput,
   type UpdateProjectInput,
-} from '@local-ai/contracts/workspace';
+} from '@local-ai/contracts/project';
 
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
 import { ProjectsService } from './projects.service.js';

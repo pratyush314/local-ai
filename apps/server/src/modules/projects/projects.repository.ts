@@ -32,10 +32,7 @@ export class ProjectsRepository {
     });
   }
 
-  async update(
-    id: string,
-    data: Partial<Pick<NewProject, 'name' | 'rootPath'>>,
-  ) {
+  async update(id: string, data: Partial<Pick<NewProject, 'name'>>) {
     const [project] = await this.database.db
       .update(projects)
       .set({

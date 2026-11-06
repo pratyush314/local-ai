@@ -8,10 +8,9 @@ import {
   type UpdateProjectMemoryStatusInput,
 } from '@local-ai/contracts/project-memory';
 
-import { projectIdSchema } from '@local-ai/contracts/workspace';
-
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
 import { MemoryService } from './services/memory.service.js';
+import { projectIdSchema } from '@local-ai/contracts/project';
 
 @Controller()
 export class MemoryController {
