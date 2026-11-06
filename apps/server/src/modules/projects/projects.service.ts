@@ -7,7 +7,7 @@ import {
 import type {
   CreateProjectInput,
   UpdateProjectInput,
-} from '@local-ai/contracts/workspace';
+} from '@local-ai/contracts/project';
 
 import { ProjectsRepository } from './projects.repository.js';
 
@@ -22,12 +22,9 @@ export class ProjectsService {
       throw new BadRequestException('Project name cannot be empty');
     }
 
-    const rootPath = input.rootPath?.trim() || null;
-
     return this.projectsRepository.create({
       id: crypto.randomUUID(),
       name,
-      rootPath,
     });
   }
 
