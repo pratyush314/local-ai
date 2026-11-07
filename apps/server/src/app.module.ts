@@ -7,6 +7,7 @@ import { ConversationsModule } from './modules/conversations/conversations.modul
 import { LlmModule } from './modules/llm/llm.module.js';
 import { ChatModule } from './modules/chat/chat.module.js';
 import { MessagesModule } from './modules/messages/messages.module.js';
+import { WorkspaceModule } from './modules/workspace/workspace.module.js';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { MessagesModule } from './modules/messages/messages.module.js';
     MessagesModule,
     LlmModule,
     ChatModule,
+    WorkspaceModule,
   ],
   controllers: [AppController],
   providers: [AppService],
