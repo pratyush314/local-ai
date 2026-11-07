@@ -16,7 +16,8 @@
 		"./document": "./dist/document/index.js",
 		"./file": "./dist/file/index.js",
 		"./project": "./dist/project/index.js",
-		"./project-memory": "./dist/project-memory/index.js"
+		"./project-memory": "./dist/project-memory/index.js",
+		"./workspace": "./dist/workspace/index.js"
 	},
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json",

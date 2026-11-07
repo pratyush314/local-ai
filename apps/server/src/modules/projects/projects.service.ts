@@ -47,7 +47,6 @@ export class ProjectsService {
 
     const update: {
       name?: string;
-      rootPath?: string | null;
     } = {};
 
     if (input.name !== undefined) {
@@ -58,10 +57,6 @@ export class ProjectsService {
       }
 
       update.name = name;
-    }
-
-    if (input.rootPath !== undefined) {
-      update.rootPath = input.rootPath?.trim() || null;
     }
 
     const project = await this.projectsRepository.update(id, update);
