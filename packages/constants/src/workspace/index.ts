@@ -1,16 +1,16 @@
-export const DEFAULT_IGNORED_DIRECTORIES = [
-	'node_modules',
+export const DEFAULT_IGNORED_DIRECTORIES = new Set([
 	'.git',
+	'node_modules',
 	'.next',
 	'dist',
 	'build',
 	'coverage',
 	'.turbo',
-] as const;
+]);
 
-export const DEFAULT_IGNORED_FILES = [
+export const DEFAULT_IGNORED_FILES = new Set([
 	'.env',
 	'.env.local',
 	'.env.development',
 	'.env.production',
-] as const;
+]);

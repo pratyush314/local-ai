@@ -6,24 +6,33 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 
 import {
   createWorkspaceDirectorySchema,
   updateWorkspaceDirectorySchema,
   workspaceDirectoryIdSchema,
+  workspaceDirectoryPathQuerySchema,
+  workspaceFileContentQuerySchema,
   type CreateWorkspaceDirectoryInput,
   type UpdateWorkspaceDirectoryInput,
+  type WorkspaceDirectoryPathQuery,
+  type WorkspaceFileContentQuery,
 } from '@local-ai/contracts/workspace';
 import { projectIdSchema } from '@local-ai/contracts/project';
 
-import { WorkspaceService } from './workspace.service.js';
+import { WorkspaceFileService } from './services/workspace-file.service.js';
+import { WorkspaceService } from './services/workspace.service.js';
 
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
 
 @Controller()
 export class WorkspaceController {
-  constructor(private readonly workspaceService: WorkspaceService) {}
+  constructor(
+    private readonly workspaceService: WorkspaceService,
+    private readonly workspaceFileService: WorkspaceFileService,
+  ) {}
 
   @Post('projects/:projectId/workspace-directories')
   registerDirectory(
@@ -44,7 +53,36 @@ export class WorkspaceController {
     return this.workspaceService.getDirectories(projectId);
   }
 
-  // Keep the more specific route before the :directoryId route.
+  // ---------------------------------------------------------
+  // Workspace file browsing
+  // Keep these routes before the generic :directoryId route.
+  // ---------------------------------------------------------
+
+  @Get('workspace-directories/:directoryId/files/content')
+  readTextFile(
+    @Param('directoryId', new ZodValidationPipe(workspaceDirectoryIdSchema))
+    directoryId: string,
+
+    @Query(new ZodValidationPipe(workspaceFileContentQuerySchema))
+    query: WorkspaceFileContentQuery,
+  ) {
+    return this.workspaceFileService.readTextFile(directoryId, query.path);
+  }
+
+  @Get('workspace-directories/:directoryId/files')
+  listDirectory(
+    @Param('directoryId', new ZodValidationPipe(workspaceDirectoryIdSchema))
+    directoryId: string,
+
+    @Query(new ZodValidationPipe(workspaceDirectoryPathQuerySchema))
+    query: WorkspaceDirectoryPathQuery,
+  ) {
+    return this.workspaceFileService.listDirectory(
+      directoryId,
+      query.path ?? '',
+    );
+  }
+
   @Get('workspace-directories/:directoryId/availability')
   checkDirectoryAvailability(
     @Param('directoryId', new ZodValidationPipe(workspaceDirectoryIdSchema))
