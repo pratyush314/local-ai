@@ -4,5 +4,7 @@ export * from './messages.schema.js';
 export * from './projects.schema.js';
 export * from './project-memories.schema.js';
 export * from './workspace-directories.schema.js';
+export * from './workspace-files.schema.js';
+export * from './workspace-file-contents.schema.js';
 
 export * from '../relations/index.js';

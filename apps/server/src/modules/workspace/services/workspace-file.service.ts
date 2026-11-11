@@ -14,8 +14,9 @@ import type {
   WorkspaceFileEntry,
 } from '../types/workspace-file.types.js';
 import { WorkspaceService } from './workspace.service.js';
-import { DEFAULT_IGNORED_DIRECTORIES } from '@local-ai/constants';
+
 import { Dirent } from 'node:fs';
+import { DEFAULT_IGNORED_DIRECTORIES } from '@local-ai/constants/workspace';
 
 const MAX_FILE_SIZE_BYTES = 1024 * 1024;
 
