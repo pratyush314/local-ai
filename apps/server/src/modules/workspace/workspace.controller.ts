@@ -24,6 +24,7 @@ import { projectIdSchema } from '@local-ai/contracts/project';
 
 import { WorkspaceFileService } from './services/workspace-file.service.js';
 import { WorkspaceService } from './services/workspace.service.js';
+import { WorkspaceIndexerService } from './services/workspace-indexer.service.js';
 
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
 
@@ -32,6 +33,7 @@ export class WorkspaceController {
   constructor(
     private readonly workspaceService: WorkspaceService,
     private readonly workspaceFileService: WorkspaceFileService,
+    private readonly workspaceIndexerService: WorkspaceIndexerService,
   ) {}
 
   @Post('projects/:projectId/workspace-directories')
@@ -55,7 +57,6 @@ export class WorkspaceController {
 
   // ---------------------------------------------------------
   // Workspace file browsing
-  // Keep these routes before the generic :directoryId route.
   // ---------------------------------------------------------
 
   @Get('workspace-directories/:directoryId/files/content')
@@ -82,6 +83,22 @@ export class WorkspaceController {
       query.path ?? '',
     );
   }
+
+  // ---------------------------------------------------------
+  // Workspace indexing
+  // ---------------------------------------------------------
+
+  @Post('workspace-directories/:directoryId/scan')
+  scanDirectory(
+    @Param('directoryId', new ZodValidationPipe(workspaceDirectoryIdSchema))
+    directoryId: string,
+  ) {
+    return this.workspaceIndexerService.scanDirectory(directoryId);
+  }
+
+  // ---------------------------------------------------------
+  // Workspace directory management
+  // ---------------------------------------------------------
 
   @Get('workspace-directories/:directoryId/availability')
   checkDirectoryAvailability(
