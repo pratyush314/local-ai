@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { desc, eq } from 'drizzle-orm';
 
-import { DatabaseService } from '../../common/database/database.service.js';
+import { DatabaseService } from '../../../common/database/database.service.js';
 import {
   workspaceDirectories,
   type NewWorkspaceDirectory,
-} from '../../common/database/drizzle/schema/index.js';
+} from '../../../common/database/drizzle/schema/index.js';
 
 @Injectable()
 export class WorkspaceRepository {

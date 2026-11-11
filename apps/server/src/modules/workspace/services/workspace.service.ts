@@ -9,7 +9,7 @@ import { isAbsolute, normalize, resolve } from 'node:path';
 
 import { ProjectsService } from '../../projects/projects.service.js';
 
-import { WorkspaceRepository } from '../workspace.repository.js';
+import { WorkspaceRepository } from '../repositories/workspace.repository.js';
 
 import type {
   CreateWorkspaceDirectoryInput,
