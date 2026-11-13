@@ -5,6 +5,7 @@ import {
   NewWorkspaceFile,
   workspaceFiles,
 } from '../../../common/database/drizzle/index.js';
+import { WORKSPACE_FILE_INDEX_STATUS } from '@local-ai/constants/workspace';
 
 @Injectable()
 export class WorkspaceFilesRepository {
@@ -13,6 +14,27 @@ export class WorkspaceFilesRepository {
   async findByDirectoryId(workspaceDirectoryId: string) {
     return this.database.db.query.workspaceFiles.findMany({
       where: eq(workspaceFiles.workspaceDirectoryId, workspaceDirectoryId),
+    });
+  }
+
+  async findPendingByDirectoryId(workspaceDirectoryId: string) {
+    return this.database.db.query.workspaceFiles.findMany({
+      where: and(
+        eq(workspaceFiles.workspaceDirectoryId, workspaceDirectoryId),
+        eq(workspaceFiles.indexStatus, WORKSPACE_FILE_INDEX_STATUS.PENDING),
+      ),
+    });
+  }
+
+  async findPendingOrFailedByDirectoryId(workspaceDirectoryId: string) {
+    return this.database.db.query.workspaceFiles.findMany({
+      where: and(
+        eq(workspaceFiles.workspaceDirectoryId, workspaceDirectoryId),
+        inArray(workspaceFiles.indexStatus, [
+          WORKSPACE_FILE_INDEX_STATUS.PENDING,
+          WORKSPACE_FILE_INDEX_STATUS.FAILED,
+        ]),
+      ),
     });
   }
 

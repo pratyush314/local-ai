@@ -8,9 +8,12 @@ import { WorkspaceService } from './services/workspace.service.js';
 import { WorkspaceFileService } from './services/workspace-file.service.js';
 import { WorkspaceFilesRepository } from './repositories/workspace-files.repository.js';
 import { WorkspaceIndexerService } from './services/workspace-indexer.service.js';
+import { WorkspaceFileContentsRepository } from './repositories/workspace-file-contents.repository.js';
+import { WorkspaceContentIndexerService } from './services/workspace-content-indexer.service.js';
+import { LlmModule } from '../llm/llm.module.js';
 
 @Module({
-  imports: [ProjectsModule],
+  imports: [ProjectsModule, LlmModule],
   controllers: [WorkspaceController],
   providers: [
     WorkspaceRepository,
@@ -18,6 +21,8 @@ import { WorkspaceIndexerService } from './services/workspace-indexer.service.js
     WorkspaceFileService,
     WorkspaceFilesRepository,
     WorkspaceIndexerService,
+    WorkspaceFileContentsRepository,
+    WorkspaceContentIndexerService,
   ],
   exports: [WorkspaceService],
 })

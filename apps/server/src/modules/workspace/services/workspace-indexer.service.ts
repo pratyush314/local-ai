@@ -263,9 +263,9 @@ export class WorkspaceIndexerService {
           contentHash: createHash('sha256').update(buffer).digest('hex'),
         });
       } catch {
-        // A file may disappear or become inaccessible during scanning.
-        // Do not treat it as deleted until a complete scan succeeds.
-        options.incrementSkipped();
+        throw new BadRequestException(
+          `Unable to inspect workspace file: ${entry.name}`,
+        );
       }
     }
   }
@@ -279,7 +279,6 @@ export class WorkspaceIndexerService {
       return true;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return WORKSPACE_SUPPORTED_EXTENSIONS.has(extname(name).toLowerCase());
   }
 

@@ -7,3 +7,10 @@ export interface WorkspaceScanResult {
   removed: number;
   skipped: number;
 }
+
+export interface WorkspaceContentIndexResult {
+  workspaceDirectoryId: string;
+  pending: number;
+  indexed: number;
+  failed: number;
+}

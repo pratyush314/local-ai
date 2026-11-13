@@ -27,6 +27,7 @@ import { WorkspaceService } from './services/workspace.service.js';
 import { WorkspaceIndexerService } from './services/workspace-indexer.service.js';
 
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
+import { WorkspaceContentIndexerService } from './services/workspace-content-indexer.service.js';
 
 @Controller()
 export class WorkspaceController {
@@ -34,6 +35,7 @@ export class WorkspaceController {
     private readonly workspaceService: WorkspaceService,
     private readonly workspaceFileService: WorkspaceFileService,
     private readonly workspaceIndexerService: WorkspaceIndexerService,
+    private readonly workspaceContentIndexerService: WorkspaceContentIndexerService,
   ) {}
 
   @Post('projects/:projectId/workspace-directories')
@@ -94,6 +96,14 @@ export class WorkspaceController {
     directoryId: string,
   ) {
     return this.workspaceIndexerService.scanDirectory(directoryId);
+  }
+
+  @Post('workspace-directories/:directoryId/index')
+  indexPendingFiles(
+    @Param('directoryId', new ZodValidationPipe(workspaceDirectoryIdSchema))
+    directoryId: string,
+  ) {
+    return this.workspaceContentIndexerService.indexPendingFiles(directoryId);
   }
 
   // ---------------------------------------------------------
