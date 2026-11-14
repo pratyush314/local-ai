@@ -13,3 +13,20 @@ export interface PreparedContext {
   turnCountBefore: number;
   turnCountAfter: number;
 }
+export interface WorkspaceSearchResult {
+  fileId: string;
+  relativePath: string;
+  name: string;
+  snippet: string;
+  tokenCount: number | null;
+  score: number;
+  matchedTerms: string[];
+}
+
+export interface PreparedWorkspaceContext extends PreparedContext {
+  workspaceFiles: Array<{
+    fileId: string;
+    relativePath: string;
+    score: number;
+  }>;
+}

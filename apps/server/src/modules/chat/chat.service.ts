@@ -21,6 +21,7 @@ import { MessagesService } from '../messages/messages.service.js';
 import { ContextService } from '../context/context.service.js';
 import { MemoryService } from '../memory/services/memory.service.js';
 import { MemoryExtractorService } from '../memory/services/memory-extractor.service.js';
+import { PROJECT_ANALYSIS_SYSTEM_PROMPT } from './constants/project-analysis-prompt.js';
 
 @Injectable()
 export class ChatService {
@@ -279,10 +280,26 @@ export class ChatService {
           ]
         : messages;
 
-      const context = await this.contextService.prepare(
-        messagesWithMemory,
-        signal,
-      );
+      const conversation =
+        await this.conversationsService.getConversation(conversationId);
+
+      const projectMessages: LlmMessage[] = conversation.projectId
+        ? [
+            {
+              role: CHAT_ROLES.SYSTEM,
+              content: PROJECT_ANALYSIS_SYSTEM_PROMPT,
+            },
+            ...messagesWithMemory,
+          ]
+        : messagesWithMemory;
+
+      const context = conversation.projectId
+        ? await this.contextService.prepareWithProjectWorkspace(
+            conversation.projectId,
+            projectMessages,
+            signal,
+          )
+        : await this.contextService.prepare(projectMessages, signal);
 
       for await (const event of this.llmService.stream({
         messages: context.messages,

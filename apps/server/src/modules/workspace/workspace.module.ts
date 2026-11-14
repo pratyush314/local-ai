@@ -24,6 +24,6 @@ import { LlmModule } from '../llm/llm.module.js';
     WorkspaceFileContentsRepository,
     WorkspaceContentIndexerService,
   ],
-  exports: [WorkspaceService],
+  exports: [WorkspaceService, WorkspaceFileContentsRepository],
 })
 export class WorkspaceModule {}
