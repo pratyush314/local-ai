@@ -3,3 +3,4 @@ export * from './common/index.js';
 export * from './conversation/index.js';
 export * from './project/index.js';
 export * from './project-memory/index.js';
+export * from './workspace/index.js';

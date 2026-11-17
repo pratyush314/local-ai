@@ -3,6 +3,7 @@ import { desc, eq } from 'drizzle-orm';
 
 import { DatabaseService } from '../../common/database/database.service.js';
 import {
+  conversations,
   projects,
   type NewProject,
 } from '../../common/database/drizzle/schema/index.js';
@@ -45,7 +46,17 @@ export class ProjectsRepository {
     return project;
   }
 
-  async delete(id: string) {
-    await this.database.db.delete(projects).where(eq(projects.id, id));
+  delete(id: string): void {
+    this.database.db.transaction((tx) => {
+      tx.update(conversations)
+        .set({
+          projectId: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(conversations.projectId, id))
+        .run();
+
+      tx.delete(projects).where(eq(projects.id, id)).run();
+    });
   }
 }

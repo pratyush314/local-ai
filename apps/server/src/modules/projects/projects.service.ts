@@ -70,6 +70,6 @@ export class ProjectsService {
 
   async deleteProject(id: string) {
     await this.getProject(id);
-    await this.projectsRepository.delete(id);
+    this.projectsRepository.delete(id);
   }
 }
