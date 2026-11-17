@@ -10,10 +10,15 @@ export class ConversationsService {
     private readonly projectsService: ProjectsService,
   ) {}
 
-  async createConversation(title = 'New Chat') {
+  async createConversation(projectId?: string | null) {
+    if (projectId) {
+      await this.projectsService.getProject(projectId);
+    }
+
     return this.conversationsRepository.createConversation({
       id: crypto.randomUUID(),
-      title,
+      title: 'New Chat',
+      projectId: projectId ?? null,
     });
   }
 
@@ -30,6 +35,12 @@ export class ConversationsService {
 
   async getConversations() {
     return this.conversationsRepository.findAllConversations();
+  }
+
+  async getProjectConversations(projectId: string) {
+    await this.projectsService.getProject(projectId);
+
+    return this.conversationsRepository.findConversationsByProjectId(projectId);
   }
 
   async touchConversation(id: string) {

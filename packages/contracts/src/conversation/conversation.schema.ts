@@ -3,6 +3,8 @@ import { z } from 'zod';
 export const conversationSchema = z.object({
 	id: z.string().uuid(),
 
+	projectId: z.string().uuid().nullable(),
+
 	title: z.string(),
 
 	createdAt: z.string(),

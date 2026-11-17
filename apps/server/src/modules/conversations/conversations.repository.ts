@@ -33,6 +33,13 @@ export class ConversationsRepository {
     });
   }
 
+  async findConversationsByProjectId(projectId: string) {
+    return this.database.db.query.conversations.findMany({
+      where: eq(conversations.projectId, projectId),
+      orderBy: [desc(conversations.updatedAt)],
+    });
+  }
+
   async updateConversationTitle(
     id: string,
     title: string,

@@ -10,6 +10,7 @@ export const startChatSchema = z.object({
 			error: 'User prompt should not be empty',
 		})
 		.max(CHAT_MESSAGE_LIMITS.MAX_CONTENT_LENGTH),
+	projectId: z.string().uuid().nullable().optional(),
 });
 
 export type StartChatInput = z.infer<typeof startChatSchema>;

@@ -42,7 +42,9 @@ export class ChatService {
     input: StartChatInput,
     signal?: AbortSignal,
   ): AsyncIterable<ChatStreamEvent> {
-    const conversation = await this.conversationsService.createConversation();
+    const conversation = await this.conversationsService.createConversation(
+      input.projectId,
+    );
 
     this.acquireGeneration(conversation.id);
 

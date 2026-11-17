@@ -13,15 +13,20 @@ import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
 import {
   AssignConversationProjectInput,
   assignConversationProjectSchema,
-} from '@local-ai/contracts';
+  CreateConversationInput,
+  createConversationSchema,
+} from '@local-ai/contracts/conversation';
 
 @Controller('conversations')
 export class ConversationsController {
   constructor(private readonly conversationsService: ConversationsService) {}
 
   @Post()
-  createConversation() {
-    return this.conversationsService.createConversation();
+  createConversation(
+    @Body(new ZodValidationPipe(createConversationSchema))
+    input: CreateConversationInput,
+  ) {
+    return this.conversationsService.createConversation(input.projectId);
   }
 
   @Get()
@@ -32,6 +37,11 @@ export class ConversationsController {
   @Get(':id')
   getConversation(@Param('id') id: string) {
     return this.conversationsService.getConversation(id);
+  }
+
+  @Get('/project/:projectId')
+  getConversationsByProject(@Param('projectId') id: string) {
+    return this.conversationsService.getProjectConversations(id);
   }
 
   @Delete(':id')
