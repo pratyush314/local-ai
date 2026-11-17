@@ -15,4 +15,12 @@ export const API_ENDPOINTS = {
 		EDIT: (conversationId: string, messageId: string) =>
 			`/chat/${conversationId}/messages/${messageId}/edit`,
 	},
+
+	PROJECTS: {
+		LIST: '/projects',
+		CREATE: '/projects',
+		BY_ID: (projectId: string) => `/projects/${projectId}`,
+		UPDATE: (projectId: string) => `/projects/${projectId}`,
+		DELETE: (projectId: string) => `/projects/${projectId}`,
+	},
 } as const;
