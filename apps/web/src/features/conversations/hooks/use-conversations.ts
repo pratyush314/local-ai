@@ -2,14 +2,20 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { deleteConversation, getConversations } from '../lib/conversation-api';
+import {
+	deleteConversation,
+	getConversations,
+	getProjectConversations,
+} from '../lib/conversation-api';
 import type { Conversation } from '../types/conversation.types';
 
 interface UseConversationsOptions {
 	refreshVersion?: number;
+	projectId?: string;
 }
 
 export function useConversations({
+	projectId,
 	refreshVersion,
 }: UseConversationsOptions = {}) {
 	const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -21,19 +27,20 @@ export function useConversations({
 		try {
 			setError(null);
 
-			const data = await getConversations();
+			const data = projectId
+				? await getProjectConversations(projectId)
+				: await getConversations();
 
 			setConversations(data);
-		} catch (error) {
-			console.error('Failed to load conversations:', error);
-
+		} catch (err) {
+			console.error('Failed to load conversations:', err);
 			setError(
-				error instanceof Error ? error.message : 'Failed to load conversations',
+				err instanceof Error ? err.message : 'Failed to load conversations',
 			);
 		} finally {
 			setIsLoading(false);
 		}
-	}, []);
+	}, [projectId]);
 
 	const removeConversation = useCallback(async (conversationId: string) => {
 		try {
@@ -67,7 +74,6 @@ export function useConversations({
 
 	return {
 		conversations,
-
 		isLoading,
 		isDeleting,
 		error,

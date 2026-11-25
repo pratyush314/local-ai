@@ -34,12 +34,14 @@ interface UseChatActionsOptions {
 	state: ChatState;
 	stateActions: ChatStateActions;
 	streamActions: ChatStreamActions;
+	projectId?: string | null;
 }
 
 export function useChatActions({
 	state,
 	stateActions,
 	streamActions,
+	projectId,
 }: UseChatActionsOptions) {
 	const sendMessage = useCallback(
 		async (content: string) => {
@@ -61,6 +63,7 @@ export function useChatActions({
 						})
 					: startChat({
 							content: normalizedContent,
+							...(projectId ? { projectId } : {}),
 						});
 
 				await streamActions.startStream(
@@ -72,7 +75,13 @@ export function useChatActions({
 				stateActions.setGenerating(false);
 			}
 		},
-		[state.conversationId, state.isGenerating, stateActions, streamActions],
+		[
+			state.conversationId,
+			state.isGenerating,
+			stateActions,
+			streamActions,
+			projectId,
+		],
 	);
 
 	const regenerateMessage = useCallback(

@@ -39,6 +39,16 @@ export function getConversation(conversationId: string): Promise<Conversation> {
 	});
 }
 
+export function getProjectConversations(
+	projectId: string,
+): Promise<Conversations> {
+	return apiClient({
+		path: API_ENDPOINTS.CONVERSATIONS.BY_PROJECT(projectId),
+		method: 'GET',
+		responseSchema: conversationsSchema,
+	});
+}
+
 export function createConversation(): Promise<Conversation> {
 	return apiClient({
 		path: API_ENDPOINTS.CONVERSATIONS.CREATE,

@@ -5,6 +5,8 @@ import { useState, type FormEvent } from 'react';
 interface CreateProjectDialogProps {
 	open: boolean;
 	isCreating: boolean;
+	isProcessing: boolean;
+	processingLabel: string;
 	onClose: () => void;
 	onCreate: (name: string, folderPath: string | null) => Promise<void>;
 }
@@ -16,6 +18,8 @@ interface FolderPickerResponse {
 export function CreateProjectDialog({
 	open,
 	isCreating,
+	isProcessing,
+	processingLabel,
 	onClose,
 	onCreate,
 }: CreateProjectDialogProps) {
@@ -90,7 +94,7 @@ export function CreateProjectDialog({
 		}
 	}
 
-	const isBusy = isCreating || isPickingFolder;
+	const isBusy = isCreating || isPickingFolder || isProcessing;
 
 	return (
 		<div
@@ -196,7 +200,11 @@ export function CreateProjectDialog({
 							disabled={isBusy || !name.trim()}
 							className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
 						>
-							{isCreating ? 'Creating...' : 'Create project'}
+							{isProcessing
+								? processingLabel
+								: isCreating
+									? 'Creating...'
+									: 'Create project'}
 						</button>
 					</div>
 				</form>

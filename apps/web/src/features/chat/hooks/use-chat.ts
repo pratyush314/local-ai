@@ -13,12 +13,14 @@ export interface UseChatOptions {
 	conversationId: string | null;
 	onConversationChange: (conversationId: string) => void;
 	onConversationUpdated: () => void;
+	projectId?: string | null;
 }
 
 export function useChat({
 	conversationId,
 	onConversationChange,
 	onConversationUpdated,
+	projectId,
 }: UseChatOptions) {
 	const chatState = useChatState();
 
@@ -109,6 +111,7 @@ export function useChat({
 		state: chatState.state,
 		stateActions,
 		streamActions,
+		projectId,
 	});
 
 	const visibleState =

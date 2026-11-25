@@ -2,6 +2,7 @@ export const API_ENDPOINTS = {
 	CONVERSATIONS: {
 		LIST: '/conversations',
 		CREATE: '/conversations',
+		BY_PROJECT: (projectId: string) => `/conversations/project/${projectId}`,
 		BY_ID: (conversationId: string) => `/conversations/${conversationId}`,
 		DELETE: (conversationId: string) => `/conversations/${conversationId}`,
 		MESSAGES: (conversationId: string) =>

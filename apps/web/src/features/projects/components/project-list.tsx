@@ -3,18 +3,39 @@
 import { useState } from 'react';
 
 import type { Project } from '@local-ai/contracts/project';
+import type {
+	WorkspaceContentIndexResult,
+	WorkspaceScanResult,
+} from '@local-ai/contracts/workspace';
 
 import { useProjectsContext } from '../providers/projects-provider';
-import { createWorkspaceDirectory } from '../lib/workspace-api';
+import {
+	createWorkspaceDirectory,
+	scanWorkspaceDirectory,
+	indexWorkspaceDirectory,
+} from '../lib/workspace-api';
 
 import { CreateProjectDialog } from './create-project-dialog';
 import { ProjectCard } from './project-card';
 
-interface PendingRegistration {
+interface PendingWorkspaceSetup {
 	projectId: string;
 	projectName: string;
 	folderPath: string;
+	workspaceDirectoryId?: string;
 }
+
+interface WorkspaceSetupResult {
+	scan: WorkspaceScanResult;
+	indexing: WorkspaceContentIndexResult;
+}
+
+type WorkspaceSetupStage =
+	| 'idle'
+	| 'registering'
+	| 'scanning'
+	| 'indexing'
+	| 'completed';
 
 function getFolderName(path: string): string {
 	const segments = path.split(/[\\/]/).filter(Boolean);
@@ -36,46 +57,98 @@ export function ProjectList() {
 	} = useProjectsContext();
 
 	const [createDialogOpen, setCreateDialogOpen] = useState(false);
-	const [pendingRegistration, setPendingRegistration] =
-		useState<PendingRegistration | null>(null);
-	const [registrationError, setRegistrationError] = useState<string | null>(
+
+	const [pendingSetup, setPendingSetup] =
+		useState<PendingWorkspaceSetup | null>(null);
+
+	const [setupError, setSetupError] = useState<string | null>(null);
+
+	const [setupStage, setSetupStage] = useState<WorkspaceSetupStage>('idle');
+
+	const [setupResult, setSetupResult] = useState<WorkspaceSetupResult | null>(
 		null,
 	);
-	const [isRegistering, setIsRegistering] = useState(false);
+
+	const [isSettingUpWorkspace, setIsSettingUpWorkspace] = useState(false);
+
+	async function runWorkspaceIndexing(
+		workspaceDirectoryId: string,
+	): Promise<void> {
+		setIsSettingUpWorkspace(true);
+		setSetupError(null);
+		setSetupResult(null);
+
+		try {
+			setSetupStage('scanning');
+
+			const scan = await scanWorkspaceDirectory(workspaceDirectoryId);
+
+			setSetupStage('indexing');
+
+			const indexing = await indexWorkspaceDirectory(workspaceDirectoryId);
+
+			setSetupResult({ scan, indexing });
+			setPendingSetup(null);
+			setSetupStage('completed');
+		} catch (error) {
+			setSetupError(
+				error instanceof Error
+					? error.message
+					: 'Workspace scanning or indexing failed.',
+			);
+		} finally {
+			setIsSettingUpWorkspace(false);
+		}
+	}
 
 	async function registerFolder(
 		projectId: string,
 		projectName: string,
 		folderPath: string,
-	) {
-		setIsRegistering(true);
-		setRegistrationError(null);
+	): Promise<void> {
+		setIsSettingUpWorkspace(true);
+		setSetupError(null);
+		setSetupResult(null);
+		setSetupStage('registering');
 
 		try {
-			await createWorkspaceDirectory(projectId, {
+			const directory = await createWorkspaceDirectory(projectId, {
 				name: getFolderName(folderPath) || projectName,
 				path: folderPath,
 			});
 
-			setPendingRegistration(null);
+			// Save the ID immediately. If scanning or indexing fails,
+			// retries can reuse this registration instead of creating another.
+			setPendingSetup({
+				projectId,
+				projectName,
+				folderPath,
+				workspaceDirectoryId: directory.id,
+			});
+
+			await runWorkspaceIndexing(directory.id);
 		} catch (error) {
-			setPendingRegistration({
+			// Registration failed, so there is no directory ID to reuse yet.
+			setPendingSetup({
 				projectId,
 				projectName,
 				folderPath,
 			});
 
-			setRegistrationError(
+			setSetupError(
 				error instanceof Error
 					? error.message
 					: 'The project was created, but its folder could not be registered.',
 			);
 		} finally {
-			setIsRegistering(false);
+			setIsSettingUpWorkspace(false);
 		}
 	}
 
-	async function handleCreate(name: string, folderPath: string | null) {
+	async function handleCreate(
+		name: string,
+		folderPath: string | null,
+	): Promise<void> {
 		const project = await createProject({ name });
 
 		if (folderPath) {
@@ -83,15 +156,24 @@ export function ProjectList() {
 		}
 	}
 
-	async function handleRetryRegistration() {
-		if (!pendingRegistration) {
+	async function handleRetrySetup(): Promise<void> {
+		if (!pendingSetup || isSettingUpWorkspace) {
 			return;
 		}
 
+		const directoryId = pendingSetup.workspaceDirectoryId;
+
+		if (directoryId) {
+			// Registration already succeeded. Retry scan and indexing.
+			await runWorkspaceIndexing(directoryId);
+			return;
+		}
+
+		// Registration itself failed. Retry registration first.
 		await registerFolder(
-			pendingRegistration.projectId,
-			pendingRegistration.projectName,
-			pendingRegistration.folderPath,
+			pendingSetup.projectId,
+			pendingSetup.projectName,
+			pendingSetup.folderPath,
 		);
 	}
 
@@ -116,11 +198,20 @@ export function ProjectList() {
 
 		await deleteProject(project.id);
 
-		if (pendingRegistration?.projectId === project.id) {
-			setPendingRegistration(null);
-			setRegistrationError(null);
+		if (pendingSetup?.projectId === project.id) {
+			setPendingSetup(null);
+			setSetupError(null);
+			setSetupStage('idle');
 		}
 	}
+
+	const setupStageLabel = {
+		idle: '',
+		registering: 'Registering folder...',
+		scanning: 'Scanning workspace files...',
+		indexing: 'Indexing workspace content...',
+		completed: 'Workspace indexed successfully.',
+	}[setupStage];
 
 	return (
 		<section className="space-y-5">
@@ -158,27 +249,88 @@ export function ProjectList() {
 				</div>
 			)}
 
-			{registrationError && pendingRegistration && (
+			{pendingSetup && setupError && (
 				<div
 					role="alert"
-					className="space-y-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm"
+					className="space-y-3 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm"
 				>
-					<p className="font-medium">
-						Project created, but folder registration failed.
-					</p>
+					<div>
+						<p className="font-medium">
+							Project created, but workspace setup did not finish.
+						</p>
 
-					<p className="text-muted-foreground">
-						{pendingRegistration.projectName}: {registrationError}
-					</p>
+						<p className="mt-1 text-muted-foreground">
+							{pendingSetup.projectName}: {setupError}
+						</p>
+
+						<p className="mt-1 break-all text-xs text-muted-foreground">
+							{pendingSetup.folderPath}
+						</p>
+					</div>
 
 					<button
 						type="button"
-						onClick={() => void handleRetryRegistration()}
-						disabled={isRegistering}
+						onClick={() => void handleRetrySetup()}
+						disabled={isSettingUpWorkspace}
 						className="font-medium underline disabled:opacity-50"
 					>
-						{isRegistering ? 'Registering...' : 'Retry folder registration'}
+						{isSettingUpWorkspace ? 'Working...' : 'Retry workspace setup'}
 					</button>
+				</div>
+			)}
+
+			{isSettingUpWorkspace && (
+				<div
+					role="status"
+					aria-live="polite"
+					className="rounded-lg border border-border p-3 text-sm"
+				>
+					<p className="font-medium">{setupStageLabel}</p>
+					<p className="mt-1 text-muted-foreground">
+						This may take a while for larger workspaces. Keep this page open.
+					</p>
+				</div>
+			)}
+
+			{setupResult && (
+				<div className="space-y-2 rounded-lg border border-border p-4 text-sm">
+					<p className="font-medium">Workspace indexing completed</p>
+
+					<div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+						<div>
+							<p className="text-muted-foreground">Discovered</p>
+							<p className="text-lg font-semibold tabular-nums">
+								{setupResult.scan.discovered}
+							</p>
+						</div>
+
+						<div>
+							<p className="text-muted-foreground">Indexed</p>
+							<p className="text-lg font-semibold tabular-nums">
+								{setupResult.indexing.indexed}
+							</p>
+						</div>
+
+						<div>
+							<p className="text-muted-foreground">Skipped</p>
+							<p className="text-lg font-semibold tabular-nums">
+								{setupResult.scan.skipped}
+							</p>
+						</div>
+
+						<div>
+							<p className="text-muted-foreground">Failed</p>
+							<p className="text-lg font-semibold tabular-nums">
+								{setupResult.indexing.failed}
+							</p>
+						</div>
+					</div>
+
+					<p className="text-xs text-muted-foreground">
+						Added: {setupResult.scan.added} · Changed:{' '}
+						{setupResult.scan.changed} · Unchanged: {setupResult.scan.unchanged}{' '}
+						· Removed: {setupResult.scan.removed}
+					</p>
 				</div>
 			)}
 
@@ -224,6 +376,8 @@ export function ProjectList() {
 			<CreateProjectDialog
 				open={createDialogOpen}
 				isCreating={isCreating}
+				isProcessing={isSettingUpWorkspace}
+				processingLabel={setupStageLabel}
 				onClose={() => setCreateDialogOpen(false)}
 				onCreate={handleCreate}
 			/>

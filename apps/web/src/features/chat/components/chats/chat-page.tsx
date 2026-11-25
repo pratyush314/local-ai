@@ -7,8 +7,7 @@ import { MobileSidebar } from '@/components/layout/mobile-sidebar';
 
 import { useChat } from '../../hooks/use-chat';
 import { useChatRouting } from '../../hooks/use-chat-routing';
-import { MessageList } from '../messages/message-list';
-import { ChatInput } from './chat-input';
+import { ChatContent } from './chat-content';
 
 export function ChatPage() {
 	const { conversationId, handleConversationChange } = useChatRouting();
@@ -38,7 +37,6 @@ export function ChatPage() {
 
 	useEffect(() => {
 		const pageTitle = title.trim() || 'Local AI';
-
 		document.title = `${pageTitle} | Local AI`;
 	}, [title]);
 
@@ -56,55 +54,17 @@ export function ChatPage() {
 				</div>
 			</header>
 
-			<div className="flex min-h-0 flex-1 flex-col">
-				{isLoadingConversation ? (
-					<div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-						Loading conversation...
-					</div>
-				) : messages.length === 0 ? (
-					<div className="flex flex-1 items-center justify-center px-4">
-						<div className="w-full max-w-2xl text-center">
-							<h2 className="text-2xl font-semibold tracking-tight">
-								Start a conversation
-							</h2>
-
-							<p className="mt-2 text-sm text-muted-foreground">
-								Ask anything. Your conversation stays on your local machine.
-							</p>
-						</div>
-					</div>
-				) : (
-					<MessageList
-						isGenerating={isGenerating}
-						messages={messages}
-						onEditMessage={editMessage}
-						onRegenerateMessage={regenerateMessage}
-					/>
-				)}
-
-				{loadError && (
-					<div
-						role="alert"
-						className="flex items-center justify-center gap-3 px-4 py-2 text-center text-sm text-destructive"
-					>
-						<p>{loadError.message}</p>
-
-						<button
-							type="button"
-							className="shrink-0 underline underline-offset-4"
-							onClick={clearLoadError}
-						>
-							Dismiss
-						</button>
-					</div>
-				)}
-
-				<ChatInput
-					onSend={sendMessage}
-					onStop={stopGeneration}
-					isGenerating={isGenerating}
-				/>
-			</div>
+			<ChatContent
+				messages={messages}
+				isGenerating={isGenerating}
+				isLoadingConversation={isLoadingConversation}
+				loadError={loadError}
+				clearLoadError={clearLoadError}
+				sendMessage={sendMessage}
+				stopGeneration={stopGeneration}
+				editMessage={editMessage}
+				regenerateMessage={regenerateMessage}
+			/>
 		</div>
 	);
 }
